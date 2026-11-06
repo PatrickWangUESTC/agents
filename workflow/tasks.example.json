@@ -1,0 +1,10 @@
+[
+  {
+    "id": "inventory",
+    "prompt": "读取 AGENTS.md 和 .agents/skills/，在 artifacts/inventory.md 中列出可用能力及路径。不要启动 subagent。"
+  },
+  {
+    "id": "check-roles",
+    "prompt": "读取 .codex/agents/ 中的角色配置，在 artifacts/roles.md 中说明分工和权限继承。不要启动 subagent。"
+  }
+]

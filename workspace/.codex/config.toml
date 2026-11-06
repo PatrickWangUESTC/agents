@@ -1,0 +1,4 @@
+# Project settings apply only when the workspace is trusted by Codex.
+# Model/provider/authentication are inherited from the user's environment.
+[agents]
+max_concurrent_threads_per_session = 3
