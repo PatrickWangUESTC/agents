@@ -1,0 +1,4 @@
+A simple stylized low-poly robot game character, full body, neutral A-pose,
+arms clearly separated from torso, two straight separated legs, large simple head,
+symmetrical clean silhouette, simple block forms, no weapons, no props, no scenery,
+single character, front facing. Geometry only, no textures required.

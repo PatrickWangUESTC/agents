@@ -14,6 +14,11 @@ that prevents useful progress; state reasonable assumptions for the rest.
   execution and verification. Optional character roles are `character_planner`,
   `character_builder`, and `character_critic`. See their actual skill files before
   execution; missing generation or engine tools are explicit blocked stages.
+- `mesh-generation` provides the N4D text/image generation adapter with persisted
+  task handles, preserved original meshes and native part inspection. Lowpoly is
+  optional and requires a user budget. Normalize posed references to front A-pose
+  before extracting clothing, shoes and body (including head/hair) references.
+  Read its live-validated image upload contract before submitting an image job.
 - `.codex/agents/` defines optional `evidence_reader`, `implementer`, and
   `acceptance_reviewer` roles. They inherit the parent model and permissions.
   Use delegation only when requested or permitted by the surrounding task.

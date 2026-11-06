@@ -1,7 +1,9 @@
 {
   "name": "character-example",
   "goal": "Build an editable character from supplied references; improve the head locally if needed.",
-  "parts": ["body", "clothing", "shoes", "head"],
+  "parts": ["body", "clothing", "shoes"],
+  "reference_preparation": {"apose_required": true},
+  "part_scope": {"body": "body including head and hair", "clothing": "outfit including stockings", "shoes": "shoe pair"},
   "references": [],
   "constraints": {
     "units": "meters",

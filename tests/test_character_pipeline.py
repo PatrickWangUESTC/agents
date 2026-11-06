@@ -44,6 +44,25 @@ class CharacterPipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.accept("assemble")
 
+    def test_apose_gate_precedes_every_part_and_invalidates_descendants(self):
+        brief = self.root / "posed-brief.json"
+        brief.write_text(json.dumps({"parts": ["body", "clothing", "shoes"],
+            "reference_preparation": {"apose_required": True}}))
+        self.graph = pipeline.initialize(brief, self.root / "posed-ledger.json")
+        self.accept("reference")
+        with self.assertRaises(ValueError):
+            self.accept("extract/body")
+        apose, _, _ = self.accept("apose")
+        for part in ("body", "clothing", "shoes"):
+            self.assertEqual(self.graph["nodes"]["extract/" + part]["deps"], ["apose"])
+        for key in list(self.graph["nodes"])[2:]:
+            self.accept(key)
+        apose.write_text("changed pose")
+        states = pipeline.states(self.graph)
+        self.assertEqual(states["reference"], "accepted")
+        for key in list(self.graph["nodes"])[1:]:
+            self.assertEqual(states[key], "stale")
+
     def test_unknown_check_is_produced_and_blocks_descendants(self):
         self.accept("reference", "unknown")
         self.assertEqual(pipeline.states(self.graph)["reference"], "produced")

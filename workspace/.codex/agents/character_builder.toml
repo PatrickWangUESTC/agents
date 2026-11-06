@@ -2,7 +2,8 @@ name = "character_builder"
 description = "Execute an assigned character generation, assembly, local-edit, rigging, or export node with real tools and saved outputs."
 developer_instructions = """
 Execute only assigned nodes and own named output paths. Read the relevant
-character assembly, local edit or delivery skill. Preserve original source assets
+character assembly, local edit or delivery skill. Use mesh-generation for N4D
+tasks, resuming saved handles before resubmitting. Preserve original source assets
 and non-target properties. Save native state, script, logs and fresh views. Never
 write the same Blender scene concurrently with another worker. On missing tools
 or unknown remote task state, report the blocker and task handle; do not fake a

@@ -6,16 +6,15 @@
 
 ```mermaid
 flowchart LR
-    R[参考与 brief] --> P[部件参考准备]
+    R[参考与 brief] --> N[正面完整 A-pose：非规范输入时]
+    N --> P[衣服、鞋、身体含头发的分件参考]
     P --> B[身体生成]
     P --> C[服装生成]
     P --> S[鞋生成]
-    P --> H[头部生成]
     B --> A[Blender 装配]
     C --> A
     S --> A
-    H --> A
-    H -. 局部重做 .-> H2[新头部候选]
+    A -. 可选局部重做 .-> H2[新头部候选]
     H2 --> A2[新装配修订]
     A --> G[绑定及姿态测试]
     A2 --> G
@@ -51,6 +50,10 @@ local/character-a/
 brief 可参考 `workflow/fixtures/character/brief.json`。示例的 references 为空、
 三角面预算和目标引擎未指定；它可用于规划测试，不能作为完整制作需求。
 真实任务按需填写参考路径、部件、预算、坐标、材质、绑定及交付要求。
+对坐姿或裁剪输入设置 `reference_preparation.apose_required=true`；先生成并检查
+完整 A-pose，再准备各组参考和独立模型。当前三组拆分可以设
+`parts=["body","clothing","shoes"]`，body 包含头和头发，head 升级是后续可选分支。
+`triangle_budget=null` 时保留原精度，不强制减面。
 
 ```bash
 python3 scripts/agents.py init runs/character-a --input local/character-a
@@ -127,6 +130,10 @@ python3 .agents/skills/character-canvas/scripts/pipeline.py block \
 ```
 
 ## 只修改头部
+
+以下命令适用于 brief.parts 显式包含 head 的任务。默认三组任务中头部属于
+body，可从 assemble 建立局部编辑分支；若需要独立头部生成节点，创建包含
+head 的新 brief/账本，显式记录与既有身体的交接，不要在旧账本中直接改依赖。
 
 ```bash
 python3 .agents/skills/character-canvas/scripts/pipeline.py fork \

@@ -9,6 +9,10 @@
 依赖和产物哈希的节点账本。实际后端按任务可用工具选择；已用 Blender 实测
 分件装配、局部头部编辑、保护部件检查、渲染及 GLB 回读。
 
+生成后端已加入 [N4D adapter](docs/n4d-provider.md)：支持文本和图片输入、任务
+续等、原件保留和原精度分件检查；lowpoly 为按需选项。图片路径已真实调用验证，使用当前接口
+要求的 multipart 上传；以后接 Tripo 时复用同一 job/artifact 交付约定。
+
 ## 目录
 
 ```text
@@ -18,6 +22,7 @@ agents/
 │   ├── .agents/skills/
 │   │   ├── workspace-intake/      # 梳理任务输入和验收条件
 │   │   ├── evidence-review/       # 依据实际产物复核结果
+│   │   ├── mesh-generation/       # N4D 生成、原件检查与可选 lowpoly
 │   │   ├── character-canvas/      # 角色节点与修订记录
 │   │   ├── character-assembly/    # 分件装配
 │   │   ├── character-local-edit/  # 局部修改与保护检查

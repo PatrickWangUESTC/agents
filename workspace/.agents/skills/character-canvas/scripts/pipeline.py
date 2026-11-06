@@ -59,8 +59,12 @@ def initialize(brief_path, ledger_path):
         nodes[name] = {"operation": operation, "deps": deps, "state": "pending"}
 
     add("reference", "inspect_reference", [])
+    part_reference = "reference"
+    if brief.get("reference_preparation", {}).get("apose_required", False):
+        add("apose", "normalize_front_apose", ["reference"])
+        part_reference = "apose"
     for part in parts:
-        add("extract/" + part, "prepare_part_reference", ["reference"])
+        add("extract/" + part, "prepare_part_reference", [part_reference])
         add("generate/" + part, "generate_part", ["extract/" + part])
     add("assemble", "assemble", ["generate/" + p for p in parts])
     last = "assemble"

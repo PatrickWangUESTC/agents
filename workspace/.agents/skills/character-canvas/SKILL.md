@@ -17,12 +17,24 @@ Run `python3 <skill-dir>/scripts/pipeline.py --help` for commands. The bundled
 workflow/fixtures/character/brief.json in the library is a brief example, not a
 real character or reference. Supply real input paths in an actual task.
 
+For a posed or cropped source, set reference_preparation.apose_required=true.
+The graph then requires reference -> apose -> extract/<part> -> generate/<part>.
+Use the available image generation tool to make the full front A-pose first and
+inspect identity, outfit, complete extremities and pose before extracting parts.
+Retain source/reference prompts and explicitly label occluded geometry inference.
+The initial groups are body (including head/hair), clothing and shoes; a separate
+head upgrade can follow later. A null polygon budget means no decimation.
+
 Each part gets a reference-preparation and generation node; assembly consumes all
 parts. Rig, export, and engine validation follow assembly. Local revision forks
 the ledger, reuses unaffected evidence, and invalidates the changed branch and
 its descendants. Never overwrite an accepted source asset in place.
 
-Discover actual backend tools before claiming execution. Record provider task IDs
+Discover actual backend tools before claiming execution. Use mesh-generation
+for the available N4D text/image adapter. Keep native outputs by default; an explicitly requested lowpoly
+output is locally decimated, not verified native Smart Mesh. A text-only brief
+can serve as the reference node; record that scope instead of inventing an image.
+Record provider task IDs
 and resume existing asynchronous jobs; do not resubmit on an uncertain timeout.
 If generation/rigging/engine tools are absent, record blocked and the exact
 handoff required. A text plan, mock file, or procedural fixture is not a generated
