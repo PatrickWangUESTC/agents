@@ -120,6 +120,21 @@ python3 -m unittest discover -s tests -v
 subagent 启动或业务产物质量。真实 smoke prompt 位于 `workflow/prompts/smoke.md`。
 GitHub Actions 运行相同的离线检查。
 
+已于 2026-11-06 在本机完成真实集成运行：两个 skills 自动发现并读取，三个
+自定义角色真实启动，子会话中加载的指令与角色 TOML 一致，生成程序通过功能测试。
+详见 [实测记录](docs/live-validation.md)。可使用一个新目录重跑（会调用模型）：
+
+```bash
+python3 scripts/agents.py run \
+  --prompt-file workflow/prompts/integration.md \
+  --input workflow/fixtures/sum --dest runs/integration-live --execute --timeout 600
+```
+
+这条命令会使用两个 skills 并调用三个 subagents；验证自动发现需结合会话初始
+skills 元数据，角色配置生效需核对真实 spawn 类型和子会话指令。仅有最终文字
+声称成功或文件存在不足以证明这两项。实测覆盖当前 CLI 和账号的执行路径；
+其他机器的安装、认证和项目配置仍需各自验证。
+
 ## 配置依据
 
 配置按 2026-11-06 核对的官方文档组织，CLI 参数对照本机
