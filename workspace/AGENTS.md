@@ -9,6 +9,11 @@ that prevents useful progress; state reasonable assumptions for the rest.
 - Discover reusable procedures under `.agents/skills/`; read only the matching
   skills. `workspace-intake` handles unclear input/output contracts;
   `evidence-review` handles acceptance checks and evidence reports.
+- Character tasks use `character-canvas` for a part-based artifact graph, then
+  `character-assembly`, `character-local-edit`, and `character-delivery` for
+  execution and verification. Optional character roles are `character_planner`,
+  `character_builder`, and `character_critic`. See their actual skill files before
+  execution; missing generation or engine tools are explicit blocked stages.
 - `.codex/agents/` defines optional `evidence_reader`, `implementer`, and
   `acceptance_reviewer` roles. They inherit the parent model and permissions.
   Use delegation only when requested or permitted by the surrounding task.

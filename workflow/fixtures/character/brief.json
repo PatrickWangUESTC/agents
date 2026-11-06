@@ -1,0 +1,15 @@
+{
+  "name": "character-example",
+  "goal": "Build an editable character from supplied references; improve the head locally if needed.",
+  "parts": ["body", "clothing", "shoes", "head"],
+  "references": [],
+  "constraints": {
+    "units": "meters",
+    "up_axis": "Z",
+    "front_axis": "-Y",
+    "triangle_budget": null,
+    "export_format": "glb",
+    "rig_required": true,
+    "target_engine": "unspecified"
+  }
+}

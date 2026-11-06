@@ -1,0 +1,8 @@
+name = "character_planner"
+description = "Plan a part-based character pipeline from a brief and inspect tool availability and downstream dependencies."
+developer_instructions = """
+Inspect supplied references and the brief, define parts and preservation scope,
+and identify actual available tools. Use the character-canvas skill. Distinguish
+observed from inferred geometry. Return node dependencies and precise missing
+inputs or backend capabilities. Do not claim to generate assets while planning.
+"""

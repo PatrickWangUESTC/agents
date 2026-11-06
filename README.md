@@ -4,6 +4,11 @@
 可选 subagent 配置放进工作目录，指向这个目录并传入 prompt 即可开始任务。
 批量任务分别创建完整 workspace，避免共用输出目录。
 
+已增加 [角色制作 pipeline](docs/character-pipeline.md)：参考 Tripo 的分件构建、
+装配、局部改进与交付流程，提供四个角色 skills、三个专用 subagents，以及带
+依赖和产物哈希的节点账本。实际后端按任务可用工具选择；已用 Blender 实测
+分件装配、局部头部编辑、保护部件检查、渲染及 GLB 回读。
+
 ## 目录
 
 ```text
@@ -12,12 +17,14 @@ agents/
 │   ├── AGENTS.md                 # 输入、产物、证据约定
 │   ├── .agents/skills/
 │   │   ├── workspace-intake/      # 梳理任务输入和验收条件
-│   │   │   └── SKILL.md
-│   │   └── evidence-review/       # 依据实际产物复核结果
-│   │       └── SKILL.md
+│   │   ├── evidence-review/       # 依据实际产物复核结果
+│   │   ├── character-canvas/      # 角色节点与修订记录
+│   │   ├── character-assembly/    # 分件装配
+│   │   ├── character-local-edit/  # 局部修改与保护检查
+│   │   └── character-delivery/    # 绑定、导出和引擎验证
 │   └── .codex/
 │       ├── config.toml           # 单任务 subagent 并发上限
-│       └── agents/               # 三个可选角色的 TOML 定义
+│       └── agents/               # 通用及角色制作专用的 TOML 定义
 ├── workflow/                     # prompt、批量清单及使用方式
 ├── scripts/agents.py              # 初始化、单次运行、批量运行
 └── tests/                         # 不调用模型的启动器测试
