@@ -24,6 +24,9 @@ flowchart LR
 
 ## 当前组件
 
+静态检查、装配和局部修订现在可由 [3D AI Lab](3d-ai-lab.md) 承接。
+先定义当前 case 的工作流，再选择匹配的操作；Lab 自身不自动进入绑定和动画。
+
 | 能力 | skill | 可选角色 |
 | --- | --- | --- |
 | 任务拆分、工具发现、节点记录 | character-canvas | character_planner |
@@ -35,6 +38,24 @@ flowchart LR
 生成可接实际可用的服务、用户已有网格或本地建模工具。本库未集成 Tripo Studio
 登录、API 或 Agentic Canvas UI。没有生成后端时记录 blocker；本机 Blender 可
 执行装配、编辑、渲染和导出。绑定和引擎能力需要实际执行才可标记通过。
+
+### 本地 3D AI Lab 式装配
+
+`character-assembly` 现在包含可执行的本地装配循环：agent 看参考图并制定
+配置 → Blender 导入部件、执行变换或局部服装贴合 → 原材质/分件色四视图 →
+agent 检查并写下一版 → 原生场景及 GLB 导出回读。可直接说：
+
+> 使用 character-assembly，将 inputs 中的身体和衣服按参考图装配。
+> 保留身体和 UV，先出基线，再根据当前四视图修改服装。每一版写新目录，
+> 缺失鞋子和未通过的穿插检查要保留，交付 blend、GLB 和对比报告。
+
+执行入口是 `.agents/skills/character-assembly/scripts/lab.py`，配置说明在
+[local-lab.md](../workspace/.agents/skills/character-assembly/references/local-lab.md)。
+自然语言解释与视觉判断由调用它的 agent 完成；脚本本身执行显式配置，不是
+独立大模型服务。它复现教程公开的工作流程，不声称实现 Tripo 私有 Astra。
+
+部分输入可做独立装配实验，但不能跳过原角色账本的依赖验收。生产级衣服
+内层、碰撞、蒙皮和动画仍需分别验证。
 
 ## 在新角色任务中使用
 
@@ -177,3 +198,5 @@ blender --background --factory-startup \
 
 输出包含 `.blend`、`.glb`、六张图片和 `fixture-report.json`。该脚本是可选的
 本地工具集成检查，GitHub CI 不依赖 Blender。
+
+已有 AI 3D Lab 检查点时，使用 [后续工作流](post-lab-workflow.md) 和 `pipeline.py from-lab` 接续，避免重新跑生成。新接续图将装配复核、绑定、姿态检查、导出和回读拆开验收，并允许按 brief 延后引擎。

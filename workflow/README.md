@@ -3,6 +3,11 @@
 `workflow/` 是本库的组织约定，Codex 不会自动加载其中的文件。
 任务 prompt 由启动器传入；角色文件由 workspace 的 `.codex/agents/` 提供。
 
+3D AI Lab 任务先按 [Lab 工作流](../docs/3d-ai-lab.md) 总结可用操作，再读取每个
+case 的 `inputs/lab-case.json`，按其资产、保护项和验收目标执行。
+使用 [Lab prompt](prompts/3d-ai-lab.md)；case 工作流是操作计划，不是自动执行器。
+有现成 mesh 时从检查点开始，不把生成、绑定、表情和动画作为必经步骤。
+
 1. 将任务目标、输入路径、输出形式和验收条件写进 prompt。
 2. 从 `workspace/` 复制一个完整工作目录，按需复制任务输入。
 3. 用 Codex 打开这个目录，或通过启动器调用 `codex exec -C <workspace>`。
@@ -20,3 +25,9 @@ workspace。`--jobs` 控制进程数，配置中的 subagent 上限只作用于�
 清单是 JSON 数组。每项有唯一 `id`、非空 `prompt`，可选 `input` 为目录路径，
 相对路径以清单所在目录为基准。请将私有清单和输入放到被 Git 忽略的 `local/`。
 批量运行前会检查整份清单，避免跑到一半才发现重复 ID 或不存在的输入。
+
+用户要求从 Lab 继续绑定/交付时，使用 [后续工作流](../docs/post-lab-workflow.md) 和 [post-lab prompt](prompts/post-lab.md)，从真实检查点接续，按 case 决定是否换部件、绑定和进入引擎。
+
+新角色测试见 [new-case-workflow](../docs/new-case-workflow.md) 和
+[新角色 prompt](prompts/new-character.md)。已有 mesh 从检查点继续，不自动重跑生成；
+颜色修正、局部几何修复、绑定和导出按实际请求分别启用。

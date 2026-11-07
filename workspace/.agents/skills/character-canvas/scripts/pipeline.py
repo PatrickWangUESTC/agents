@@ -68,13 +68,123 @@ def initialize(brief_path, ledger_path):
         add("generate/" + part, "generate_part", ["extract/" + part])
     add("assemble", "assemble", ["generate/" + p for p in parts])
     last = "assemble"
-    if brief.get("constraints", {}).get("rig_required", True):
+    if brief.get("constraints", {}).get("rig_required", False):
         add("rig", "rig_and_pose_test", [last])
         last = "rig"
     add("export", "export_and_reimport", [last])
-    add("engine", "engine_import_and_animation_test", ["export"])
+    engine = brief.get("delivery", {}).get("engine", {})
+    if engine.get("enabled", False):
+        if not engine.get("target"):
+            raise ValueError("Enabled engine validation needs a target")
+        add("engine", "engine_import_and_animation_test", ["export"])
     graph = {"schema_version": 1, "brief": brief, "brief_hash": digest(brief),
-             "nodes": nodes, "source_brief": snapshot(brief_path)}
+             "nodes": nodes, "source_brief": snapshot(brief_path),
+             "deferred": [] if "engine" in nodes else [{"node": "engine", "status": "not_run",
+                 "reason": engine.get("reason", "Engine validation not requested")}]}
+    write(ledger_path, graph, new=True)
+    return graph
+
+
+def continue_from_lab(brief_path, ledger_path, session_path):
+    """Pin an existing Lab checkpoint; task acceptance is not asset acceptance."""
+    ledger_path = Path(ledger_path).resolve()
+    handoff_path = ledger_path.with_name(ledger_path.stem + "-handoff.json")
+    if ledger_path.exists() or handoff_path.exists():
+        raise FileExistsError("Use a new ledger and handoff path")
+    brief = json.loads(Path(brief_path).read_text())
+    delivery = brief.get("delivery", {})
+    if delivery.get("facial_controls", False):
+        raise ValueError("Facial controls require a separate explicit workflow")
+    formats = delivery.get("formats", ["blend", "glb", "fbx"])
+    if (not isinstance(formats, list) or not formats
+            or any(f not in {"blend", "glb", "fbx"} for f in formats)):
+        raise ValueError("delivery.formats must contain blend, glb or fbx")
+    engine = delivery.get("engine", {})
+    if engine.get("enabled", False) and not engine.get("target"):
+        raise ValueError("Enabled engine validation needs a target")
+    upgrade = brief.get("local_upgrade", {})
+    if upgrade.get("enabled", False) and not (upgrade.get("part") and upgrade.get("reason")):
+        raise ValueError("Optional local upgrade needs part and reason")
+    session_path = Path(session_path).resolve(strict=True)
+    session = json.loads((session_path / "session.json").read_text())
+    revision = session["selected"]
+    if not isinstance(revision, str) or not re.fullmatch(r"r[0-9]+", revision):
+        raise ValueError("Invalid selected Lab revision")
+    case = snapshot(session_path / "case.json")
+    if case["sha256"] != session["case_sha256"]:
+        raise ValueError("Lab case has changed")
+    revdir = session_path / "revisions" / revision
+    receipt_path = revdir / "receipt.json"
+    receipt = json.loads(receipt_path.read_text())
+    if receipt.get("revision") != revision or receipt.get("status") != "produced":
+        raise ValueError("Selected Lab revision was not successfully produced")
+    files = receipt.get("files", {})
+    for required in ("scene.blend", "inventory.json", "checks.json", "readback.json", "views.json"):
+        if required not in files:
+            raise ValueError(f"Missing Lab checkpoint file: {required}")
+    pinned = [case, snapshot(receipt_path)]
+    for relative, expected in files.items():
+        path = (revdir / relative).resolve(strict=True)
+        if not path.is_relative_to(revdir):
+            raise ValueError("Lab receipt path escapes revision")
+        observed = snapshot(path)
+        if observed["sha256"] != expected:
+            raise ValueError(f"Lab checkpoint changed: {relative}")
+        pinned.append(observed)
+    scene = snapshot(revdir / "scene.blend")
+    nodes = {}
+
+    def add(key, operation, deps, required):
+        nodes[key] = {"operation": operation, "deps": deps, "state": "pending",
+                      "required_checks": required,
+                      "skills": {"lab_checkpoint": ["character-canvas"],
+                                 "local_upgrade": ["character-part-upgrade"],
+                                 "assembly_review": ["three-d-ai-lab"],
+                                 "rig": ["character-rigging"],
+                                 "pose_test": ["character-rigging"],
+                                 "export": (["character-fbx-export", "character-delivery"] if "rig" in nodes else ["character-delivery"]),
+                                 "roundtrip": (["character-fbx-export", "character-delivery"] if "rig" in nodes else ["character-delivery"]),
+                                 "engine": ["character-delivery"]}[key]}
+
+    add("lab_checkpoint", "pin_existing_lab_checkpoint", [], ["checkpoint_integrity"])
+    last = "lab_checkpoint"
+    if upgrade.get("enabled", False):
+        add("local_upgrade", "extract_generate_replace_requested_part", [last],
+            ["requested_part_replaced", "unaffected_parts_preserved", "visual_review"])
+        last = "local_upgrade"
+    add("assembly_review", "review_static_assembly", [last],
+        ["part_inventory", "protected_properties", "four_view_review", "intersection_review"])
+    last = "assembly_review"
+    if brief.get("constraints", {}).get("rig_required", False):
+        add("rig", "bind_current_parts_to_requested_skeleton", [last],
+            ["all_parts_bound", "reference_skeleton", "normalized_weights", "rest_surface_preserved"])
+        add("pose_test", "inspect_diagnostic_deformation", ["rig"],
+            ["body_hair_deformation", "clothing_shoe_deformation", "posed_intersections"])
+        last = "pose_test"
+    add("export", "export_requested_formats", [last],
+        ["requested_formats", "all_parts_exported", "materials_preserved"])
+    add("roundtrip", "fresh_process_reimport", ["export"],
+        ["parts_materials_dimensions", "skeleton_weights", "posed_surface_agreement"]
+        if "rig" in nodes else ["parts_materials_dimensions", "static_surface_agreement"])
+    deferred = []
+    if engine.get("enabled", False):
+        add("engine", "target_engine_import_and_motion_check", ["roundtrip"],
+            ["target_engine_import", "target_engine_motion"])
+    else:
+        deferred.append({"node": "engine", "status": "not_run",
+                         "reason": engine.get("reason", "Blender-only delivery; engine not requested")})
+    graph = {"schema_version": 1, "workflow": "post_lab_v1", "brief": brief,
+             "brief_hash": digest(brief), "source_brief": snapshot(brief_path),
+             "nodes": nodes, "deferred": deferred,
+             "handoff": {"session": str(session_path), "revision": revision, "scene": scene,
+                         "lab_acceptance": receipt.get("acceptance", "not_run"),
+                         "scope": "Checkpoint integrity only; assembly quality must be reviewed"}}
+    evidence = {"scope": graph["handoff"]["scope"],
+                "artifact_sha256": {scene["path"]: scene["sha256"]},
+                "checks": [{"name": "checkpoint_integrity", "status": "pass",
+                            "evidence": [r["path"] for r in pinned]}]}
+    write(handoff_path, evidence, new=True)
+    record(graph, "lab_checkpoint", [scene["path"]], handoff_path)
     write(ledger_path, graph, new=True)
     return graph
 
@@ -130,6 +240,12 @@ def record(graph, key, artifacts, evidence_path):
     checks = evidence.get("checks")
     if not isinstance(checks, list) or not checks:
         raise ValueError("Evidence needs nonempty checks")
+    names = [check.get("name") for check in checks]
+    if len(names) != len(set(names)):
+        raise ValueError("Check names must be unique")
+    missing = set(node.get("required_checks", [])) - set(names)
+    if missing:
+        raise ValueError(f"Missing required checks: {sorted(missing)}")
     files = []
     for check in checks:
         if (not isinstance(check.get("name"), str) or not check["name"].strip()
@@ -166,6 +282,9 @@ def fork(graph, start, parent_path):
         old = result["nodes"][key]
         result["nodes"][key] = {"operation": old["operation"], "deps": old["deps"],
                                 "state": "pending"}
+        for field in ("required_checks", "skills"):
+            if field in old:
+                result["nodes"][key][field] = copy.deepcopy(old[field])
     result["parent_ledger"] = snapshot(parent_path)
     result["revision_start"] = start
     return result
@@ -177,6 +296,10 @@ def main():
     p = sub.add_parser("init")
     p.add_argument("brief", type=Path)
     p.add_argument("ledger", type=Path)
+    p = sub.add_parser("from-lab", help="Continue from a pinned existing Lab checkpoint")
+    p.add_argument("brief", type=Path)
+    p.add_argument("ledger", type=Path)
+    p.add_argument("--session", required=True, type=Path)
     for name in ("status", "record", "block", "fork"):
         p = sub.add_parser(name)
         p.add_argument("ledger", type=Path)
@@ -195,6 +318,8 @@ def main():
     try:
         if args.command == "init":
             graph = initialize(args.brief, args.ledger)
+        elif args.command == "from-lab":
+            graph = continue_from_lab(args.brief, args.ledger, args.session)
         else:
             graph = load(args.ledger)
             if args.command == "record":
@@ -214,6 +339,7 @@ def main():
                  if observed[k] in {"pending", "blocked", "stale", "produced"}
                  and all(observed[d] == "accepted" for d in n["deps"])]
         print(json.dumps({"states": observed, "eligible": ready,
+                          "deferred": graph.get("deferred", []),
                           "note": "Eligibility is dependency readiness, not backend availability."
                           }, ensure_ascii=False, indent=2))
         return 0

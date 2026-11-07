@@ -18,7 +18,7 @@ class CharacterPipelineTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.brief = self.root / "brief.json"
-        self.brief.write_text(json.dumps({"parts": ["body", "head"]}))
+        self.brief.write_text(json.dumps({"parts": ["body", "head"], "constraints": {"rig_required": True}, "delivery": {"engine": {"enabled": True, "target": "test-fixture-engine"}}}))
         self.path = self.root / "ledger.json"
         self.graph = pipeline.initialize(self.brief, self.path)
 
@@ -39,6 +39,16 @@ class CharacterPipelineTests(unittest.TestCase):
     def accept_all(self):
         for key in self.graph["nodes"]:
             self.accept(key)
+
+    def test_new_static_case_does_not_force_pose_rig_or_engine(self):
+        brief = self.root / "static.json"
+        brief.write_text(json.dumps({"parts": ["hull", "wings", "visor"]}))
+        graph = pipeline.initialize(brief, self.root / "static-ledger.json")
+        self.assertNotIn("apose", graph["nodes"])
+        self.assertNotIn("rig", graph["nodes"])
+        self.assertNotIn("engine", graph["nodes"])
+        self.assertEqual(graph["nodes"]["assemble"]["deps"], ["generate/hull", "generate/wings", "generate/visor"])
+        self.assertEqual(graph["deferred"][0]["status"], "not_run")
 
     def test_cannot_record_before_dependencies(self):
         with self.assertRaises(ValueError):

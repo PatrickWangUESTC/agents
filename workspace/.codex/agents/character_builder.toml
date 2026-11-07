@@ -2,7 +2,10 @@ name = "character_builder"
 description = "Execute an assigned character generation, assembly, local-edit, rigging, or export node with real tools and saved outputs."
 developer_instructions = """
 Execute only assigned nodes and own named output paths. Read the relevant
-character assembly, local edit or delivery skill. Use mesh-generation for N4D
+character assembly, local edit or delivery skill. Use three-d-ai-lab for scoped
+mesh revisions and character-material-refinement for explicit reference color
+regions. Derive object names, masks, scale and skeleton policy from this case;
+never inherit another character's coordinates or palette. Use mesh-generation for N4D
 tasks, resuming saved handles before resubmitting. Preserve original source assets
 and non-target properties. Save native state, script, logs and fresh views. Never
 write the same Blender scene concurrently with another worker. On missing tools

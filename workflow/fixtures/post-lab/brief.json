@@ -1,0 +1,34 @@
+{
+  "case_id": "replace-with-case-id",
+  "parts": [
+    "Body",
+    "Outfit",
+    "LeftFootwear",
+    "RightFootwear"
+  ],
+  "constraints": {
+    "rig_required": true,
+    "triangle_budget": null,
+    "preserve_body_surface_and_pose": true
+  },
+  "local_upgrade": {
+    "enabled": false
+  },
+  "skeleton": {
+    "reference": "supply-real-template-path",
+    "sha256": "supply-verified-hash",
+    "preserve_names_and_parents": true
+  },
+  "delivery": {
+    "formats": [
+      "blend",
+      "glb",
+      "fbx"
+    ],
+    "facial_controls": false,
+    "engine": {
+      "enabled": false,
+      "reason": "Blender-only validation requested; engine deferred"
+    }
+  }
+}

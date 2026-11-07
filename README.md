@@ -4,6 +4,11 @@
 可选 subagent 配置放进工作目录，指向这个目录并传入 prompt 即可开始任务。
 批量任务分别创建完整 workspace，避免共用输出目录。
 
+新增 [3D AI Lab skill](workspace/.agents/skills/three-d-ai-lab/SKILL.md)：先写每个
+case 的工作流，再由 agent 编写 Blender 操作，执行检查、静态装配和局部编辑，
+通过新预览和证据选择修订。包含检查点、保护属性检查、失败分支与原生文件回读。
+当前不扩展到表情和动画；模型使用调用者配置，无内置 Astra 服务。
+
 已增加 [角色制作 pipeline](docs/character-pipeline.md)：参考 Tripo 的分件构建、
 装配、局部改进与交付流程，提供四个角色 skills、三个专用 subagents，以及带
 依赖和产物哈希的节点账本。实际后端按任务可用工具选择；已用 Blender 实测
@@ -12,6 +17,15 @@
 生成后端已加入 [N4D adapter](docs/n4d-provider.md)：支持文本和图片输入、任务
 续等、原件保留和原精度分件检查；lowpoly 为按需选项。图片路径已真实调用验证，使用当前接口
 要求的 multipart 上传；以后接 Tripo 时复用同一 job/artifact 交付约定。
+
+本地装配现有可执行的 **3D AI Lab 式循环**：agent 读取参考并制定配置，Blender
+装配、服装局部贴合、四视图检查，再导出和回读。保留失败基线及每轮修订；
+身体、UV、材质可设为保护项。它复现公开工作流程，不调用 Tripo 私有服务。
+用法见 [本地装配说明](workspace/.agents/skills/character-assembly/references/local-lab.md)。
+
+新例子从 [按输入选择工作流](docs/new-case-workflow.md) 开始；包含单次与批量命令。
+新增 `character-material-refinement`，通过当前网格指纹和显式面选区修正参考颜色。
+局部修复遵循几何与视觉双重复核，不沿用旧角色的坐标、发色或骨骼默认值。
 
 ## 目录
 
@@ -26,7 +40,12 @@ agents/
 │   │   ├── character-canvas/      # 角色节点与修订记录
 │   │   ├── character-assembly/    # 分件装配
 │   │   ├── character-local-edit/  # 局部修改与保护检查
-│   │   └── character-delivery/    # 绑定、导出和引擎验证
+│   │   ├── character-delivery/    # 交付与引擎验证
+│   │   ├── three-d-ai-lab/         # 观察、操作、检查、复核闭环
+│   │   ├── character-material-refinement/ # 显式选区与参考颜色
+│   │   ├── character-part-upgrade/ # 可选局部替换
+│   │   ├── character-rigging/      # 全部部件绑定
+│   │   └── character-fbx-export/   # 骨架 FBX 和独立回读
 │   └── .codex/
 │       ├── config.toml           # 单任务 subagent 并发上限
 │       └── agents/               # 通用及角色制作专用的 TOML 定义
@@ -156,3 +175,7 @@ skills 元数据，角色配置生效需核对真实 spawn 类型和子会话指
 - [Skills 与 .agents/skills 发现路径](https://learn.chatgpt.com/docs/build-skills)
 - [自定义 subagents 与 .codex/agents](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 - [配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)
+
+已有 Lab 结果继续制作角色：见 [AI 3D Lab 后续工作流](docs/post-lab-workflow.md)，包含可选局部升级、独立装配复核、绑定/姿态、导出/回读，以及按需求启用的引擎验证。
+
+后续操作已拆成可执行技能：`character-part-upgrade`（局部部件替换）、`character-rigging`（全量部件绑定）和 `character-fbx-export`（骨架 FBX 与新进程姿态回读）；见 [使用流程](docs/post-lab-workflow.md)。

@@ -22,3 +22,10 @@ fails, keep the old checkpoint and reject the candidate.
 Changed topology invalidates rig/skin/morph correspondence. Re-run the affected
 binding and animation checks; do not reuse old acceptance merely because object
 names match. Retain both candidates and their evidence for review.
+
+For requested reference-to-part upgrades and separated static replacement, use character-part-upgrade. Its helper does not segment a head fused into the body; keep this edit workflow for explicit segmentation and case-specific seam repairs.
+
+For surface intersections/openings, use three-d-ai-lab and its local-repair guide.
+For a material-only defect, use character-material-refinement; do not invalidate
+vertex correspondence by remeshing merely to change colors. Explicitly recheck
+materials and exports while retaining applicable geometric evidence.
