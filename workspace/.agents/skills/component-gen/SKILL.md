@@ -9,7 +9,7 @@ Use the reviewed case-specific parts from character-part-extraction. For each pa
 
 1. Generate geometry with Smart Mesh P1, model P1-20260311. Use a default target of 5,000 faces per part, texture=false and pbr=false. Record the actual triangle count from the output.
 2. Unwrap the selected mesh using Smart UV with baking disabled. Reuse an existing verified UV output when available.
-3. Generate base color with B, model v3.5-20260815. Use the single front part image, original_image alignment, standard quality, seed 42, delight=false and pbr=false. Use the textured GLB for downstream work.
+3. Generate base color with B, model v3.5-20260815. Use the single front part image, original_image alignment, standard quality, seed 42, delight=true and pbr=false. Use the textured GLB for downstream work.
 
 ## CLI recipe
 
@@ -31,7 +31,7 @@ tripo files upload "$PART_IMAGE" --json --no-open > "$PART_OUT/reference.json"
 PROMPT=$(python3 -c 'import json,sys; print(json.dumps({"image":{"file_token":json.load(open(sys.argv[1]))["file_token"]}}))' "$PART_OUT/reference.json")
 tripo model texture "$UV_INPUT" --model v3.5-20260815 \
   --texture-quality standard --texture-alignment original_image \
-  -p texture_seed=42 -p delight=false -p pbr=false -p "texture_prompt=$PROMPT" \
+  -p texture_seed=42 -p delight=true -p pbr=false -p "texture_prompt=$PROMPT" \
   --out "$PART_OUT/texture" --json --no-open > "$PART_OUT/texture.json"
 ```
 
