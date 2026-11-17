@@ -33,9 +33,10 @@ do not schedule either by default. Existing ledgers retain their recorded graph.
 the ledger, reuses unaffected evidence, and invalidates the changed branch and
 its descendants. Never overwrite an accepted source asset in place.
 
-Discover actual backend tools before claiming execution. Use mesh-generation
-for the available N4D text/image adapter. Keep native outputs by default; an explicitly requested lowpoly
-output is locally decimated, not verified native Smart Mesh. A text-only brief
+For reviewed anime part images, route generate/<part> to component-gen for Tripo
+P1 geometry, Smart UV and B-version texture. For an explicitly selected N4D
+provider, use mesh-generation and its native-output or local-decimation workflow.
+A text-only brief
 can serve as the reference node; record that scope instead of inventing an image.
 Record provider task IDs
 and resume existing asynchronous jobs; do not resubmit on an uncertain timeout.
