@@ -24,9 +24,7 @@ The graph then requires reference -> apose -> extract/<part> -> generate/<part>.
 Use the available image generation tool to make the full front A-pose first and
 inspect identity, outfit, complete extremities and pose before extracting parts.
 Retain source/reference prompts and explicitly label occluded geometry inference.
-Choose semantic parts from the actual reference and editable requirements. Body
-(including head/hair), clothing and shoes is one humanoid example, not a required
-split; keep accessories or separate hair/head only when useful for this case. A null polygon budget means no decimation.
+For anime image cases, run character-part-extraction at the apose and extract nodes. Use its case-specific ownership and saved part images. A null polygon budget means no decimation.
 
 Each part gets a reference-preparation and generation node; assembly consumes all
 parts. Export follows assembly. Rigging requires explicit constraints.rig_required=true;
