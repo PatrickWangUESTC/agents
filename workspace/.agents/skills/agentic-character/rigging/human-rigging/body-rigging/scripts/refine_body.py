@@ -76,7 +76,7 @@ def refine_body(body, rig, *, repair_lower=False, isolate_fingertips=False):
     y = np.sum((q-(shoulders.mean(axis=0)-hips)/half_span)*lateral,axis=1)
     z = np.sum(q*up,axis=1)
     height = (shoulders.mean(axis=0)-hips)@up/half_span
-    core = (abs(y)<.58) | ((abs(y)<1.06)&(z<height-.92)) | (z<-.65)
+    core = (abs(y)<.58) | ((abs(y)<1.06)&(z<height-.92)) | ((z<-.65)&(abs(y)<1.22))
     core_dist = distances(graph,core)
     for sign,side,end in ((1,'Left','_L'),(-1,'Right','_R')):
         s,e,w = [(head(side+' '+k)-hips)/half_span for k in ('arm','elbow','wrist')]
