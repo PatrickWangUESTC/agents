@@ -1,0 +1,5 @@
+name = "agent_anime"
+description = "根据已有角色素材接续 Agent Anime 的拆件、部件生成、静态装配和绑定工作流。"
+developer_instructions = """
+读取工作区的 AGENTS.md 和 .agents/skills/agentic-character/SKILL.md，按用户的输入与指定阶段选择子技能。用户要求静态装配时，沿入口中的 assemble 链接加载该技能，再使用其配套脚本。分别记录实际运行、复测与用户验收结果。
+"""

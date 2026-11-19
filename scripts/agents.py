@@ -42,7 +42,7 @@ def validate(template: Path = TEMPLATE) -> dict:
     with (template / ".codex/config.toml").open("rb") as f:
         tomllib.load(f)
     skills = []
-    for path in sorted((template / ".agents/skills").glob("*/SKILL.md")):
+    for path in sorted((template / ".agents/skills").rglob("SKILL.md")):
         content = path.read_text()
         parts = content.split("---", 2)
         if len(parts) != 3 or parts[0].strip() or not parts[2].strip():
@@ -51,6 +51,8 @@ def validate(template: Path = TEMPLATE) -> dict:
         metadata = dict(re.findall(r"^(name|description):\s*(.+)$", parts[1], re.M))
         if metadata.get("name") != path.parent.name or not metadata.get("description"):
             raise ValueError(f"Invalid skill name/description: {path}")
+        if metadata["name"] in skills:
+            raise ValueError(f"Duplicate skill name: {path}")
         skills.append(metadata["name"])
     roles = []
     for path in sorted((template / ".codex/agents").glob("*.toml")):
