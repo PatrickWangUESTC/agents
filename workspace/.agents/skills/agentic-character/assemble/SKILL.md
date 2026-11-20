@@ -21,6 +21,12 @@ Use the complete character's four-view A-pose as the default assembly reference:
 4. Diagnose intersections on the full geometry with the complete body visible. For failed coverage or visible crossings, run the contact refinement loop. Save revisions separately and compare against the same baseline.
 5. Apply the [static review acceptance criteria](#static-review-acceptance). Deliver the selected editable project, packed textures, four full views and interface close-ups after the applicable checks pass. Keep the source assets and case configuration for reruns.
 
+### Reducing repeated fits
+
+Save the rigid placement and its camera frames once. Before a detailed seam fit, compare the unmasked full front and profile with the reference: check head size and tilt, shoulder and waist height, foot baseline and the dominant clothing and hair silhouettes. Correct a shared scale or orientation error at placement before spending time on individual contacts.
+
+For each failed interface, record the visible defect, its likely cause and the one change being tested. Start from the last visually sound scene. Reuse accepted parts and settings. Preview the affected region from the failing view and a second angle, then recheck its immediate neighbors. If the edit does not improve the specific defect, discard it and revisit the diagnosis before attempting another edit. An upstream reference or mesh mismatch returns to the earliest affected stage with the specific part and evidence. Once local checks pass, run the full saved-scene geometry and visual checks for delivery.
+
 ## Contact refinement loop
 
 Start from a saved baseline. Select the first failing interface, measure its coverage and inspect same-camera images. Fix gross placement with uniform scale and translation before moving local vertices. Derive garment placements and hair length from the current case's full reference views and protected meshes. Keep original layouts isolated until scoring in a blind run.
