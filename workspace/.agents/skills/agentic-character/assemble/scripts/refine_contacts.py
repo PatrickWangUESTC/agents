@@ -4,6 +4,7 @@ from pathlib import Path
 import hashlib
 import json
 import sys
+import time
 
 import bpy
 import numpy as np
@@ -72,6 +73,7 @@ def main():
                 raise ValueError('A part cannot be its own contact reference')
             obj=movable(name)
             p,t=surface(obj)
+            started=time.monotonic()
             q,history=fit(p,t,fixed,step['clearance']*height,step['max_offset']*height,step['iterations'])
             if 'height_fade' in step:
                 low,high=step['height_fade']
@@ -85,6 +87,8 @@ def main():
                 obj.data.vertices[int(i)].co=inverse @ Vector(q[i])
             obj.data.update()
             report['clearance'].append(dict(part=name,collider=step['collider'],history=history,
+                                             applied_pairs=len(fixed.overlap(tree(q,t))),
+                                             seconds=time.monotonic()-started,
                                              max_offset=float(np.max(np.linalg.norm(q-p,axis=1)))))
     bpy.ops.file.pack_all()
     path=str(out/'assembly.blend')
