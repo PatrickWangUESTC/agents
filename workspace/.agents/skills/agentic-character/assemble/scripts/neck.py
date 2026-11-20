@@ -221,18 +221,18 @@ def fit_closed_neck(bo, h, options):
 def fit_neck(bo, h, options):
     open_error = None
     chin = options.get("chin_min_z")
-    if chin is None or not math.isfinite(chin):
-        raise ValueError("Measure chin_min_z on the placed head before fitting its neck")
+    if chin is not None and not math.isfinite(chin):
+        raise ValueError("chin_min_z must be finite when supplied")
     blend = options["blend_height"]
     original_cut = options["head_cut_z"]
     if not math.isfinite(blend) or blend <= 0 or not math.isfinite(original_cut):
         raise ValueError("Invalid neck transition band")
-    if original_cut + blend >= chin:
+    if chin is not None and original_cut + blend >= chin:
         raise ValueError("Neck transition reaches the protected chin; lower the neck band")
 
     for offset in (0, 0.25, 0.5, -0.25, -0.5):
         candidate = dict(options, head_cut_z=original_cut + offset * options["blend_height"])
-        if candidate["head_cut_z"] + blend >= chin:
+        if chin is not None and candidate["head_cut_z"] + blend >= chin:
             continue
         try:
             return fit_open_neck(bo, h, candidate)
