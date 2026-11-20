@@ -29,6 +29,17 @@ For each failed interface, record the visible defect, its likely cause and the o
 
 Record elapsed time for placement, local solves and final verification separately from time awaiting visual review. Use the per-step `history`, `applied_pairs`, `max_offset` and `seconds` in the contact report to choose the next edit. Compare actual applied pairs after the height fade with the initial count. If counts stall at the displacement limit, inspect a section or coverage sample before widening the edit. For a glove that means fingertip enclosure and cuff continuity; for socks and shoes, inspect shaft and sole separately. If counts drop while the reference silhouette worsens, restore the prior fit and change the local constraint. A shared boundary can have intentional contacts.
 
+### Four-view re-review and recurring failures
+
+At each re-review present one contact sheet with columns front, left, back and right and rows for the reference, baseline and selected candidate. Freeze one camera frame, scale, light and visibility configuration for both render rows. Keep the full body visible. Use `python scripts/review_sheet.py BEFORE AFTER sheet.png --references FRONT LEFT BACK RIGHT` with Pillow and the four correctly ordered reference panels. Preserve proportions. Label generated turnaround references and report any missing accessory or incomplete body region. Open the sheet before selecting the revision. Add close-ups where the four full views lack resolution.
+
+| Repeated failure | Earliest discriminating view and next check |
+|---|---|
+| The face looks different after a seemingly good neck fit | Compare front and both profiles with the source head at equal eye spacing. Inspect the bare face and then hair and collar together. Localize the first change before editing. |
+| Hair matches the back outline while the forehead or scalp remains bare | Read fringe height against the eyes in front, crown coverage in profile and locks from behind. Check cap coverage and head–hair crossings separately. |
+| Gloves or shoes lose their silhouette while crossing counts fall | Check front for width and both profiles for fingertip or toe protrusion, then inspect cuff or heel close-ups. Keep original shells, topology and UVs when required. |
+| A collar, sleeve or skirt looks plausible from the front and clips in depth | Inspect the back and each profile, then sample the failing cross-section on the fixed body. Distinguish an incomplete body from a detached garment and record which contact checks its mesh supports. |
+
 ## Contact refinement loop
 
 Start from a saved baseline. Select the first failing interface, measure its coverage and inspect same-camera images. Fix gross placement with uniform scale and translation before moving local vertices. Derive garment placements and hair length from the current case's full reference views and protected meshes. Keep original layouts isolated until scoring in a blind run.
