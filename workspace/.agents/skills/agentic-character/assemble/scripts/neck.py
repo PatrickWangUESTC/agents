@@ -3,10 +3,11 @@
 import math
 from collections import Counter
 import bmesh
+from neck_open import fit_open_neck
 from mathutils import Vector
 
 
-def fit_neck(bo, h, options):
+def fit_closed_neck(bo, h, options):
     def key(p):
         return tuple(round(x, 6) for x in p)
 
@@ -214,3 +215,19 @@ def fit_neck(bo, h, options):
     if error > 1e-6:
         raise ValueError(f"Neck boundary mismatch {error}")
     return {bo.name: bodysegments, h.name: hs}
+
+
+
+def fit_neck(bo, h, options):
+    open_error = None
+    original_cut = options["head_cut_z"]
+    for offset in (0, 0.25, 0.5, -0.25, -0.5):
+        candidate = dict(options, head_cut_z=original_cut + offset * options["blend_height"])
+        try:
+            return fit_open_neck(bo, h, candidate)
+        except ValueError as error:
+            open_error = error
+    try:
+        return fit_closed_neck(bo, h, options)
+    except (ValueError, AssertionError) as error:
+        raise ValueError(f"Existing-rim fit: {open_error}. Closed-cap fit: {error}.") from error
