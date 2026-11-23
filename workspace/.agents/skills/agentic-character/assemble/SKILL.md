@@ -163,6 +163,8 @@ transforms, orthographic scales and visibility settings for both revisions.
 
 ### Choosing a local repair
 
+A failed visual or geometric check returns the affected interface to repair in the same run. Resume the reviewed checkpoint, preserve accepted parts, and execute a local correction. Reopen it and repeat the same-camera checks of the interface and its neighbors. If a trial distorts the silhouette, discard that trial and try a different local correction. A failure report is an intermediate result. Hand off the repaired candidate for user review after the checks pass, or identify the concrete missing input or constraint that prevents further repair.
+
 | Observation | Repair and verification |
 | --- | --- |
 | The neck looks continuous from the front but opens under the chin or at the rear | Inspect the bare join first. On semantic splits the actual interface may follow the face and rear skull. Find the corresponding boundary on each supplied mesh and fit those loops before considering a new neck band. Use the mandatory eight-view neck check above. |
