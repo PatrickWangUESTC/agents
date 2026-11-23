@@ -1,4 +1,6 @@
 """Open a saved scene once and inspect camera-matched full and local views."""
+import argparse
+from functools import lru_cache
 import json
 import math
 from pathlib import Path
@@ -13,14 +15,14 @@ from refine_contacts import audit, meshes
 from clearance import surface, tree
 
 
-def region_contacts(objects, spec):
+def region_contacts(objects, spec, geometry=surface, garment_tree=None):
     """Intersect the fixed surface inside a world-space box with the entire garment."""
     lo, hi = np.asarray(spec["bounds"], dtype=float)
     if lo.shape != (3,) or hi.shape != (3,) or not np.all(np.isfinite([lo, hi])) or np.any(lo >= hi):
         raise ValueError("Expected finite world-space minimum and maximum corners")
     if spec["fixed"] == spec["garment"]:
         raise ValueError("Select two distinct meshes")
-    p, faces = surface(objects[spec["fixed"]])
+    p, faces = geometry(objects[spec["fixed"]])
     triangles = p[faces]
     candidates = np.all((triangles.max(1) >= lo) & (triangles.min(1) <= hi), axis=1)
     vertices, indices, sources = [], [], []
@@ -45,19 +47,44 @@ def region_contacts(objects, spec):
     if not indices:
         raise ValueError("Contact box contains no fixed surface")
     clipped_tree = tree(np.asarray(vertices), np.asarray(indices))
-    pairs = clipped_tree.overlap(tree(*surface(objects[spec["garment"]])))
+    garment = objects[spec["garment"]]
+    target = garment_tree(garment) if garment_tree else tree(*geometry(garment))
+    pairs = clipped_tree.overlap(target)
     return dict(fixed_faces=len(set(sources)), triangle_pairs=len({(sources[i], j) for i,j in pairs}),
                 visual_review="pending")
 
 
 def main():
-    plan_path, destination = sys.argv[sys.argv.index("--") + 1:]
-    plan = json.loads(Path(plan_path).read_text())
-    out = Path(destination).resolve()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("plan", type=Path)
+    parser.add_argument("destination", type=Path)
+    parser.add_argument("--focus", nargs="+", metavar="FRAME=VIEW")
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    plan = json.loads(args.plan.read_text())
+    directions = ("front", "front_left", "left", "back_left",
+                  "back", "back_right", "right", "front_right")
+    focus = {}
+    for item in args.focus or ():
+        frame, _, view = item.partition("=")
+        if frame not in plan["frames"] or view not in directions:
+            parser.error(f"Unknown frame or direction: {item}")
+        if directions.index(view) % 2 and not plan["frames"][frame].get("diagonals"):
+            parser.error(f"Diagonal view is disabled for {frame}")
+        focus.setdefault(frame, set()).add(view)
+    out = args.destination.resolve()
     out.mkdir(parents=True, exist_ok=False)
     scene = bpy.context.scene
     objects = meshes()
-    report = audit(objects)
+    if focus:
+        if any(o.hide_render or any(m.type == "MASK" for m in o.modifiers) for o in objects.values()):
+            raise ValueError("Focused reviews require the full unmasked scene")
+        report = {"scope": "local_iteration"}
+    else:
+        report = audit(objects)
+    geometry = lru_cache(maxsize=None)(surface)
+    @lru_cache(maxsize=None)
+    def garment_tree(obj):
+        return tree(*geometry(obj))
     camera = scene.camera
     if camera is None or camera.data.type != "ORTHO":
         raise ValueError("Select an orthographic review camera")
@@ -69,6 +96,8 @@ def main():
     left = Vector((-front.y, front.x, 0))
     rendered = []
     for label, frame in plan["frames"].items():
+        if focus and label not in focus:
+            continue
         if not label.isidentifier() or frame['scale'] <= 0:
             raise ValueError("Invalid frame name or scale")
         center = Vector(frame["center"])
@@ -78,12 +107,13 @@ def main():
             spec = frame["contact"]
             if {spec["fixed"], spec["garment"]}.intersection(frame.get("hide", [])):
                 raise ValueError("Both contact surfaces must be visible in the review frame")
-            report.setdefault("region_contacts", {})[label] = region_contacts(objects, spec)
+            report.setdefault("region_contacts", {})[label] = region_contacts(objects, spec, geometry, garment_tree)
         try:
             for obj in hidden:
                 obj.hide_render = True
-            for index, name in enumerate(("front", "front_left", "left", "back_left",
-                                          "back", "back_right", "right", "front_right")):
+            for index, name in enumerate(directions):
+                if focus and name not in focus[label]:
+                    continue
                 if index % 2 and not frame.get("diagonals"):
                     continue
                 angle = math.pi * index / 4
@@ -99,6 +129,8 @@ def main():
             for obj in hidden:
                 obj.hide_render = False
     report.update(frames=plan, images=rendered)
+    if focus:
+        report["reviewed_views"] = {label: sorted(views) for label, views in focus.items()}
     (out / "geometry.json").write_text(json.dumps(report, indent=2))
 
 

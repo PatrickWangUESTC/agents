@@ -71,6 +71,33 @@ def apply_local_fit(obj, objects, collider_name, fixed, p, t, q):
     return initial, 0., 0., rejected
 
 
+def fit_group(obj, name, p, t, fixed, gap, budget, iterations, mobility):
+    group = obj.vertex_groups.get(name)
+    if group is None:
+        raise ValueError(f"Missing repair vertex group {name!r} on {obj.name}")
+    weights = np.zeros(len(p))
+    for v in obj.data.vertices:
+        for entry in v.groups:
+            if entry.group == group.index:
+                weights[v.index] = entry.weight
+                break
+    if mobility is not None:
+        weights *= mobility
+    # A UV split can duplicate a physical vertex. Respect the most restrictive lock.
+    _, shared = np.unique(np.round(p, 7), axis=0, return_inverse=True)
+    welded = np.ones(shared.max()+1)
+    np.minimum.at(welded, shared, weights)
+    weights = welded[shared]
+    incident = t[np.any(weights[t] > 0, axis=1)]
+    if not len(incident):
+        raise ValueError(f"Empty repair region {name!r} on {obj.name}")
+    ids, local = np.unique(incident, return_inverse=True)
+    result = p.copy()
+    result[ids], history = fit(p[ids], local.reshape(incident.shape), fixed, gap,
+                               budget, iterations, weights[ids])
+    return result, history
+
+
 def meshes():
     return {o.name:o for o in bpy.context.scene.objects if o.type=='MESH'}
 
@@ -121,9 +148,15 @@ def main():
                 z=(p[:,2]-collider[:,2].min())/height
                 a=np.clip((z-low)/(high-low),0,1)
                 mobility=a*a*(3-2*a)
-            q,history=fit(p,t,fixed,step['clearance']*height,step['max_offset']*height,step['iterations'],mobility)
+            args = (p, t, fixed, step['clearance']*height, step['max_offset']*height,
+                    step['iterations'], mobility)
+            if 'vertex_group' in step:
+                q, history = fit_group(obj, step['vertex_group'], *args)
+            else:
+                q, history = fit(*args)
             pairs,offset,fraction,rejected=apply_local_fit(obj,objects,step['collider'],fixed,p,t,q)
             report['clearance'].append(dict(part=name,collider=step['collider'],history=history,
+                                             vertex_group=step.get('vertex_group'),
                                              applied_pairs=pairs,seconds=time.monotonic()-started,
                                              max_offset=offset,applied_fraction=fraction,
                                              rejected_trials=rejected))
