@@ -245,7 +245,14 @@ def inventory(rig, spec, unresolved=None):
                         # A broad posterior shell spanning both hips is common on
                         # layered armor. Existing skirt weights can cover just its front.
                         span = lateral[mask]
-                        if (kind == "tail" and min(-span.min(), span.max()) > .25 * scale
+                        spans_hips = min(-span.min(), span.max()) > .25 * scale
+                        if obj.name == spec.get("garment") and all(
+                            name in rig.data.bones for name in ("DEF-Left leg", "DEF-Right leg")
+                        ):
+                            hip_sides = [np.dot(joint(name) - chest, side)
+                                         for name in ("DEF-Left leg", "DEF-Right leg")]
+                            spans_hips |= span.min() <= min(hip_sides) and span.max() >= max(hip_sides)
+                        if (kind == "tail" and spans_hips
                                 and np.ptp(span) > 1.5 * np.ptp(back[mask])):
                             if unresolved is not None and any(
                                 obj.vertex_groups[g.group].name.startswith("Tail.") and g.weight > 0
