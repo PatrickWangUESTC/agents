@@ -62,23 +62,27 @@ def main():
     parser.add_argument("--focus", nargs="+", metavar="FRAME=VIEW")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     plan = json.loads(args.plan.read_text())
+    render_review(plan, args.plan.resolve().parent, args.destination, args.focus)
+
+
+def render_review(plan, plan_dir, out, selectors=None):
     directions = ("front", "front_left", "left", "back_left",
                   "back", "back_right", "right", "front_right")
     focus = {}
-    for item in args.focus or ():
+    for item in selectors or ():
         frame, _, view = item.partition("=")
         if frame not in plan["frames"] or view not in directions:
-            parser.error(f"Unknown frame or direction: {item}")
+            raise ValueError(f"Unknown frame or direction: {item}")
         if directions.index(view) % 2 and not plan["frames"][frame].get("diagonals"):
-            parser.error(f"Diagonal view is disabled for {frame}")
+            raise ValueError(f"Diagonal view is disabled for {frame}")
         focus.setdefault(frame, set()).add(view)
-    out = args.destination.resolve()
+    out = out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     scene = bpy.context.scene
     objects = meshes()
     geometry = lru_cache(maxsize=None)(surface)
     if "geometry_limits" in plan:
-        check_regions(plan["geometry_limits"], args.plan.resolve().parent, out,
+        check_regions(plan["geometry_limits"], plan_dir, out,
                       lambda name: geometry(objects[name]))
     if focus:
         if any(o.hide_render or any(m.type == "MASK" for m in o.modifiers) for o in objects.values()):

@@ -48,6 +48,7 @@ def check_regions(specs, plan_dir, destination, geometry):
                 "max_edge_ratio": float(ratios.max()),
                 "min_edge_ratio": float(ratios.min()),
                 "max_p95_edge_ratio": float(np.percentile(ratios, 95)),
+                "max_p95_abs_relative_change": float(np.percentile(np.abs(ratios - 1), 95)),
             }
             limits = {k: v for k, v in spec.items() if k not in ("part", "reference")}
             if not limits or not limits.keys() <= measured.keys():
