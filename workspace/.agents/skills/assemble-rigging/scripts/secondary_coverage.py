@@ -82,6 +82,17 @@ def inventory(rig, spec, unresolved=None):
         if obj.type != "MESH" or obj.find_armature() != rig:
             continue
         p = positions(obj)
+        # A fitted skirt often projects behind the hips. Preserve explicitly
+        # skinned skirt panels when a proposal comes only from silhouette.
+        skirt_groups = {
+            g.index for g in obj.vertex_groups
+            if re.match(r"^(?:DEF[-_])?(?:skirt|裙骨)(?:[._ -]|$)", g.name, re.I)
+            and (bone := rig.data.bones.get(g.name)) and bone.use_deform
+        }
+        skirt_vertices = np.array([
+            any(g.group in skirt_groups and g.weight > 0 for g in v.groups)
+            for v in obj.data.vertices
+        ]) if skirt_groups else None
         batches = defaultdict(set)
         for face in obj.data.polygons:
             slots = obj.material_slots
@@ -227,6 +238,10 @@ def inventory(rig, spec, unresolved=None):
                                 )
                             )
                 for kind, mask in masks:
+                    if not hint and skirt_vertices is not None:
+                        mask = mask & ~skirt_vertices[ids]
+                        if not mask.any():
+                            continue
                     parent = {
                         "wing": "DEF-Chest",
                         "tail": "DEF-Hips",
