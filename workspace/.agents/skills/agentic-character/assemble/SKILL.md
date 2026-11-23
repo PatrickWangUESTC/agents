@@ -145,6 +145,7 @@ For a full-body fitting pass, keep the fixed body and foot pose visible. Compare
 with the starting scene after reopening the revision. Keep the same camera
 transforms, orthographic scales and visibility settings for both revisions.
 
+* On feedback about a visible breakthrough, resume from the exact reviewed scene and camera plan. Add a separate close-up for each affected side, including a front or rear oblique that exposes the sleeve wall. Register the intended skin exposure and cuff position from this case’s reference. Keep covered upper-arm or forearm regions separate from the open cuff. In each relevant camera frame add `"contact": {"fixed": "<body mesh>", "garment": "<outer layer>", "bounds": [[xmin,ymin,zmin],[xmax,ymax,zmax]]}` with world-space corners measured on the fixed body. Reuse the boxes across revisions. The review reports unique triangle pairs inside each box and saves the matching views. Inspect the full sleeve as well as the sampled boxes. Record the side, view, visible skin and whether the arm exits through the intended opening. A visible breakthrough keeps the candidate in Assemble even with a lower whole-garment count. Correct the failed sleeve on a copy, then rerun the same review and check its neighbors. A zero count still needs a visual coverage check for an open or detached sleeve.
 * Check each wrist in an oblique view that shows the cuff opening and palm.
   Compare transverse sections through each arm and sleeve. Shift the sleeve
   centerline to follow shoulder, elbow and wrist, tapering edits toward the
