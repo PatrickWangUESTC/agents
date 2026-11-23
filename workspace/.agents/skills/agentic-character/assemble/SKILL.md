@@ -31,6 +31,16 @@ blender -b --factory-startup --python-exit-code 1 -P scripts/inspect_parts.py --
 
 The final `ASSEMBLE_INTAKE` JSON log line maps each input to its bounds and four axis-labelled RGB views. Identify the actual front visually. The cache uses the embedded GLB bytes, inspection script and Blender build. Reuse neutral previews across placement changes; a reference, camera or pose change still requires new placement evidence. External buffers or texture files must be packed into an analysis copy first.
 
+At first placement, fit each foot to its own shoe cavity using its sole plane, heel, toe and shaft. Separate the left/right connected shells for measurement even when both are in one mesh. For a standing pair with disjoint lateral halves, use `scripts/footwear.py` (`fit_pair`) on body-aligned world vertices and triangles after placing the soles. Measure the ankle and occupied shaft levels on this character. Write its returned vertices back to the existing shoe mesh. Fit the torso plate against chest depth and shoulder width, each gauntlet against its own fingers and wrist, and the head against the actual neck interface. Solve offsets for the relevant regions of a coupled garment while preserving the shared object, UVs and topology. Check visible coverage and the space between layers in profile. A head's neck seam and hairline require separate evidence.
+
+For each candidate run the combined review in a single fresh Blender process:
+
+```sh
+blender -b CANDIDATE.blend --python-exit-code 1 -P scripts/review_views.py -- cameras.json NEW_REVIEW_DIR
+```
+
+The camera JSON takes a horizontal `front` vector and a `frames` object. Each named frame supplies a world-space `center` and positive orthographic `scale`. Include the whole figure and each applicable interface, including both hands and both feet. For the bare neck, add `"diagonals": true` and a `hide` array listing its occluders. Reuse the identical plan across revisions. The report audits all unmasked meshes before rendering and records the views. Inspect the images before freezing. Time continuously from intake through this visual decision, including diagnosis, script edits and failed trials. Record offline scoring and publishing separately.
+
 For an ambiguous local failure, run:
 
 ```sh
