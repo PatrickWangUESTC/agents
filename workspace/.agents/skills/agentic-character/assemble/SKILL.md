@@ -37,7 +37,15 @@ Prefer the smallest change that restores the reference silhouette and coverage. 
 
 At first placement, align each shoe cavity to its fixed foot using its sole plane, heel, toe and shaft. Separate the left/right connected shells for measurement even when both are in one mesh. For a standing pair with disjoint lateral halves, use `scripts/footwear.py` (`fit_pair`) on body-aligned world vertices and triangles after placing the soles. Measure the ankle and occupied shaft levels on this character. The helper preserves the lower shoe as a rigid group and adjusts the shaft above the ankle. Skip shaft fitting for low shoes. For rigid armor or a decorative rim crossing ankle height, protect the whole rigid piece and fit only the flexible region. Compare the profile and local edge lengths against the uniformly placed source before keeping a correction. Fit the torso plate against chest depth and shoulder width, each gauntlet against its own fingers and wrist, and the head against the actual neck interface. Solve offsets for the relevant regions of a coupled garment while preserving the shared object, UVs and topology. Check visible coverage and the space between layers in profile. A head's neck seam and hairline require separate evidence.
 
-For initial review and final handoff run the combined review in a single fresh Blender process:
+At first review, put the complete four views and the suspect interfaces on one sheet. Choose the face, garment and contact angles that can distinguish the current risks. Keep the renderer, lighting, scale and frame definitions for all subsequent rounds. Add an `overview` list to the camera plan, e.g. `["collar=left","cuff=back_right"]`, and a `full` frame. Run once from a Python environment with Pillow:
+
+```sh
+python scripts/review_sheet.py overview CANDIDATE.blend cameras.json FIRST_REVIEW --blender /path/to/blender
+```
+
+Open `FIRST_REVIEW/overview.html` to inspect any tile at full resolution in one click, or use the portable `overview.jpg`. Each tile label is the exact `FRAME=VIEW` selector for focused re-review; inspect its original PNG at native resolution when needed. Reuse this command and camera plan on the final candidate to obtain a matched sheet.
+
+To render the complete plan without composing a sheet:
 
 ```sh
 blender -b CANDIDATE.blend --python-exit-code 1 -P scripts/review_views.py -- cameras.json NEW_REVIEW_DIR
