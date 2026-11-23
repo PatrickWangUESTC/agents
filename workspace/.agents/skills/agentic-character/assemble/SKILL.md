@@ -11,6 +11,34 @@ For a blind trial, use the complete character reference, the fixed body and the 
 
 Use visible landmarks on the fixed body to calibrate scale and the foot baseline. The original front image can supply fingertip positions or garment motifs. Verify both profiles for depth and the back for layer order. Check that low-contrast boots or gloves survived reference cropping by comparing with the uncropped turnaround. Keep original transforms, source assemblies and original per-part projections outside fitting. Label a resumed blind checkpoint as a resumed trial.
 
+## Execution from a new case through user review
+
+Use the case work directory for evidence and timings. The clock starts before the first input inspection. For each analysis, fit, render, review and rework round, record the start, finish, candidate, observed defect, decision and next action in the case notes. Mark tool runtime, active agent analysis and time awaiting user input separately. On a new case, derive all placements from the supplied inputs. A replay with saved placements measures executor speed only.
+
+| Stage | Work to batch or reuse | Condition for continuing |
+|---|---|---|
+| First inspection | In one Blender launch inspect all supplied GLBs with the command below. Read the complete reference and the part previews together. Record front axis, foot baseline, intended coverage, fixed geometry, coupled pieces and available neck rims. | One placement plan explains relative height, orientation and layer order. Resolve input or axis mistakes here. |
+| First placement | Fit the fixed body and rigidly place the parts. Save one unmasked baseline and camera setup. Review the whole four-view sheet in one pass. Collect all defects, their failing views and affected interfaces before choosing a repair. | A shared pose, scale or orientation error goes back to placement. Local failures go to the saved baseline. |
+| Diagnose and repair | Select the earliest shared cause. If the cause is unclear, run the local diagnostic below once with the failing view, target and suspected neighbors. Compare the full view, temporarily hidden occluders and isolated target. For an exposed panel, sample rays in the intended covered region to distinguish missing coverage from a crossing. | Change one cause per experiment. Batch independent, already diagnosed edits on a copy when their contact neighborhoods are disjoint. If a correction creates a new defect, return to the last sound revision. |
+| Re-review | Reuse the original reference, baseline renders, and input analysis for identical assets. Render the updated full four views together. At readable scale review the changed regions and neighbors; revisit an accepted region when the edit affects its geometry, visibility, pose or attachment. Carry forward explicit user acceptance of design details. | If the same defect recurs, record what the previous experiment ruled out and change the measurement, cause or repair. Continue on the saved scene until both local geometry and appearance pass. |
+| Handoff | Reopen the selected scene and run the full acceptance checks below, including the neck views where applicable. Deliver the exact candidate and its review sheet in Studio when invoked there. | Record user approval on that version. A rejection reopens Assemble at that candidate with the user's feedback. |
+
+For the initial analysis and for replaced inputs, run from the skill directory:
+
+```sh
+blender -b --factory-startup --python-exit-code 1 -P scripts/inspect_parts.py -- CASE_CACHE PARTS/*.glb
+```
+
+The final `ASSEMBLE_INTAKE` JSON log line maps each input to its bounds and four axis-labelled RGB views. Identify the actual front visually. The cache uses the embedded GLB bytes, inspection script and Blender build. Reuse neutral previews across placement changes; a reference, camera or pose change still requires new placement evidence. External buffers or texture files must be packed into an analysis copy first.
+
+For an ambiguous local failure, run:
+
+```sh
+blender -b --factory-startup --python-exit-code 1 -P scripts/inspect_fit.py -- REVISION.blend DIAG_DIR --before BASELINE.blend --part TARGET --neighbor BODY --occluder ACCESSORY --front X Y --view back
+```
+
+Use actual object names and the case camera direction. Repeat `--neighbor` or `--occluder` as needed; omit the occluder when none is suspected. For a first diagnosis omit `--before`. One call saves matched crops and raw triangle-pair counts for the named neighbors. Restore all parts for final visual acceptance. A suspected missing panel that remains exposed with the accessory hidden requires a panel coverage check; a defect visible only with the accessory shown requires an attachment and depth check.
+
 ## Assembly loop
 
 Use the complete character's four-view A-pose as the default assembly reference: front, one profile, back and the opposite profile. When only a front image is available, retain it and generate the turnaround from it. Record view order and provenance, check the pose, common scale and foot baseline, and use all four views during placement. In blind evaluation, reserve the original assembled geometry and its side and back renders for scoring after the candidate is frozen.
