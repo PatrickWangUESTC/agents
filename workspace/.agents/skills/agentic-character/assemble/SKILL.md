@@ -140,12 +140,14 @@ The optional `neck` object specifies the `head` part, body opening `center_xy`, 
 
 Omit the legacy `keep_visible` option in static assembly. When resuming an older scene, remove Mask modifiers from the working copy and verify that every supplied mesh is visible in both the saved scene and the full-character renders.
 
-When hair is a separate part, set `hair_frame` to a head-centered camera frame
-and review the four head-hair close-ups. Fit the cap to the crown, brow and
-temples. Long locks and asymmetric ornaments displace the whole-hair bounding
-box away from the cap center. Compare matched before/after profiles for air
-between fringe and forehead, check the three-quarter view for exposed scalp,
-and compare the strand length and eye visibility with the A-pose.
+### Hair placement and review
+
+Set `hair_frame` around the fixed head. Register the cap using the crown, brow and temples. Long locks and asymmetric ornaments can shift the center of the whole-hair bounding box. Start each revision from the latest accepted placement. If a prior edit flattened the hair, recover its last shape-preserving mesh at the approved scale.
+
+- **Depth.** Compare the fringe-to-forehead gap, side locks against the nose and chin, and ear exposure in both profiles and a three-quarter view. For a forward or backward placement error, translate hair and attached ornaments together along the head's front axis. Preserve the cap's front-to-back thickness.
+- **Height.** Hold the selected depth and rotation fixed. Compare small vertical translations in the same front and profile frames. Read the crown and lower fringe against the brow, upper eyelid and intended eye visibility in the reference. Choose the smallest shift that corrects the silhouette. Scale trial offsets to this head and its available clearance.
+- **Local contact.** Once placement is sound, anchor the roots and swing a colliding free lock around its attachment. Preserve its length, curl and ornament position relative to the strand. Limit residual vertex edits to the interfering fringe or tip and its transition. Compare cap depth in matched orientation and corresponding strand edges against the shape-preserving mesh.
+- **Re-review.** Inspect the unmasked whole character from four sides and matched head close-ups. Sample scalp coverage around the crown, temples and rear. Check fringe–head and tip–clothing intersections separately and record residual whole-head contacts. With a front-only design reference, use side and rear views to verify physical fit. Continue on failed regions until shape, placement and contact checks pass together.
 
 For props that obscure the character in profile, list their part names in
 `review_hide_props`. The full scene keeps all props. The additional character
