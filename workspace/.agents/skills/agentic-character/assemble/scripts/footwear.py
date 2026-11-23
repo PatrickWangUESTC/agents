@@ -11,7 +11,7 @@ def section(points, triangles, height):
 
 
 def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, margin, max_scale):
-    """Fit toe/heel as a single shell, then measure and fit each shaft by height.
+    """Translate the lower shoe rigidly, then measure and fit each shaft by height.
 
     Inputs are corresponding Nx3 physical coordinates in the same pose.
     levels span the occupied shaft. A shoe already has its sole at floor height.
@@ -38,7 +38,9 @@ def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, mar
             span = np.ptp(source[:, :2], axis=0)
             scale = np.clip((np.ptp(target[:, :2], axis=0) + margin) / np.maximum(span, 1e-9), 1, max_scale)
             return np.r_[center, shift, scale]
-        samples = [[ankle, *measurement(foot, lower)]]
+        ankle_fit = measurement(foot, lower)
+        ankle_fit[-2:] = 1.0  # Preserve sole, toe and heel proportions.
+        samples = [[ankle, *ankle_fit]]
         for z in levels[levels > ankle]:
             target = section(body, body_faces, z)
             source = section(shoes, shoe_faces, z)
