@@ -1,4 +1,6 @@
 """Fit paired shells in body-aligned coordinates (depth, lateral, height)."""
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 
 
@@ -10,7 +12,7 @@ def section(points, triangles, height):
     return start + (end - start) * ((height - start[:, 2]) / (end[:, 2] - start[:, 2]))[:, None]
 
 
-def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, margin, max_scale):
+def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, margin, max_scale, parallel=False):
     """Translate the lower shoe rigidly, then measure and fit each shaft by height.
 
     Inputs are corresponding Nx3 physical coordinates in the same pose.
@@ -25,7 +27,18 @@ def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, mar
     result = shoes.copy()
     if np.any(np.ptp(np.sign(shoes[shoe_faces, 1] - midline), axis=1) > 0):
         raise ValueError("Separate overlapping or midline-crossing shoe shells by identity first")
-    for side in (-1, 1):
+    def sided_sections(points, faces, side):
+        # Retain triangles crossing the midline; filter the actual intersections below.
+        faces = faces[np.any((points[faces, 1] - midline) * side > 0, axis=1)]
+        heights = points[faces, 2]
+        low, high = heights.min(axis=1), heights.max(axis=1)
+        def at(z):
+            active = faces[(low <= z) & (high > z)]
+            samples = section(points, active, z)
+            return samples[(samples[:, 1] - midline) * side > 0]
+        return at
+
+    def fit_side(side):
         ids = np.flatnonzero((shoes[:, 1] - midline) * side > 0)
         foot = body[((body[:, 1] - midline) * side > 0) & (body[:, 2] < ankle)]
         shell = shoes[ids]
@@ -41,11 +54,10 @@ def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, mar
         ankle_fit = measurement(foot, lower)
         ankle_fit[-2:] = 1.0  # Preserve sole, toe and heel proportions.
         samples = [[ankle, *ankle_fit]]
+        body_at = sided_sections(body, body_faces, side)
+        shoe_at = sided_sections(shoes, shoe_faces, side)
         for z in levels[levels > ankle]:
-            target = section(body, body_faces, z)
-            source = section(shoes, shoe_faces, z)
-            target = target[(target[:, 1] - midline) * side > 0]
-            source = source[(source[:, 1] - midline) * side > 0]
+            target, source = body_at(z), shoe_at(z)
             if len(target) >= 4 and len(source) >= 4:
                 samples.append([z, *measurement(target, source)])
         if len(samples) < 2:
@@ -54,5 +66,13 @@ def fit_pair(body, body_faces, shoes, shoe_faces, *, midline, ankle, levels, mar
         center, shift, scale = np.split(np.stack([
             np.interp(shell[:, 2], values[:, 0], column) for column in values[:, 1:].T
         ], axis=1), 3, axis=1)
-        result[ids, :2] += shift + (shell[:, :2] - center) * (scale - 1)
+        return ids, shift + (shell[:, :2] - center) * (scale - 1)
+
+    if parallel:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            updates = list(pool.map(fit_side, (-1, 1)))
+    else:
+        updates = map(fit_side, (-1, 1))
+    for ids, delta in updates:
+        result[ids, :2] += delta
     return result

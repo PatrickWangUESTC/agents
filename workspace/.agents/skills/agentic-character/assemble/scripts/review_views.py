@@ -13,6 +13,7 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from refine_contacts import audit, meshes
 from clearance import surface, tree
+from preflight import check_regions
 
 
 def region_contacts(objects, spec, geometry=surface, garment_tree=None):
@@ -75,13 +76,16 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     scene = bpy.context.scene
     objects = meshes()
+    geometry = lru_cache(maxsize=None)(surface)
+    if "geometry_limits" in plan:
+        check_regions(plan["geometry_limits"], args.plan.resolve().parent, out,
+                      lambda name: geometry(objects[name]))
     if focus:
         if any(o.hide_render or any(m.type == "MASK" for m in o.modifiers) for o in objects.values()):
             raise ValueError("Focused reviews require the full unmasked scene")
         report = {"scope": "local_iteration"}
     else:
         report = audit(objects)
-    geometry = lru_cache(maxsize=None)(surface)
     @lru_cache(maxsize=None)
     def garment_tree(obj):
         return tree(*geometry(obj))
