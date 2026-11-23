@@ -8,6 +8,7 @@ import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from secondary_coverage import check
+from handheld import check_handhelds
 
 
 def armature(spec):
@@ -27,6 +28,8 @@ def armature(spec):
 
 def upgrade(spec, output):
     result = check(armature(spec), spec, repair=True)
+    held = check_handhelds(armature(spec), repair=True)
+    result["handhelds"] = held
     invalid = {}
     rig = armature(spec)
     for obj in bpy.context.scene.objects:
@@ -48,12 +51,14 @@ def upgrade(spec, output):
                 "mask": any(m.type == "MASK" for m in obj.modifiers),
             }
     result["invalid_skins"] = invalid
-    result["passed"] = result["passed"] and not invalid
+    result["passed"] = result["passed"] and not invalid and all(x["passed"] for x in held.values())
     if result["passed"]:
         bpy.context.preferences.filepaths.save_version = 0
         bpy.ops.wm.save_as_mainfile(filepath=str(output))
         bpy.ops.wm.open_mainfile(filepath=str(output))
         readback = check(armature(spec), spec)
+        checked = check_handhelds(armature(spec))
+        readback["passed"] = readback["passed"] and checked.keys() == held.keys() and all(x["passed"] for x in checked.values())
         result["readback_passed"] = readback["passed"]
         result["passed"] = readback["passed"]
     return result

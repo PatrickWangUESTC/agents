@@ -242,6 +242,18 @@ def inventory(rig, spec, unresolved=None):
                         mask = mask & ~skirt_vertices[ids]
                         if not mask.any():
                             continue
+                        # A broad posterior shell spanning both hips is common on
+                        # layered armor. Existing skirt weights can cover just its front.
+                        span = lateral[mask]
+                        if (kind == "tail" and min(-span.min(), span.max()) > .25 * scale
+                                and np.ptp(span) > 1.5 * np.ptp(back[mask])):
+                            if unresolved is not None and any(
+                                obj.vertex_groups[g.group].name.startswith("Tail.") and g.weight > 0
+                                for index in ids[mask] for g in obj.data.vertices[int(index)].groups
+                            ):
+                                unresolved.append(dict(object=obj.name, kind="skirt", passed=False,
+                                    reason="broad skirt panel has tail weights; restore garment binding"))
+                            continue
                     parent = {
                         "wing": "DEF-Chest",
                         "tail": "DEF-Hips",
