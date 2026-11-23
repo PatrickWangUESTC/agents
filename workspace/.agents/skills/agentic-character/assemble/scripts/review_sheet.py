@@ -20,6 +20,10 @@ def overview(argv):
     parser.add_argument("--blender", default="blender")
     args = parser.parse_args(argv)
     plan = json.loads(args.plan.read_text())
+    if "review_groups" in plan:
+        from review_packet import render_packet
+        render_packet(args, plan)
+        return
     keys = [f"full={view}" for view in VIEWS] + plan["overview"]
     if len(keys) == 4 or len(set(keys)) != len(keys):
         parser.error("Choose at least one distinct close-up in overview")

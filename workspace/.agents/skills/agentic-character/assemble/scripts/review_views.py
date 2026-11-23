@@ -60,12 +60,13 @@ def main():
     parser.add_argument("plan", type=Path)
     parser.add_argument("destination", type=Path)
     parser.add_argument("--focus", nargs="+", metavar="FRAME=VIEW")
+    parser.add_argument("--audit", action="store_true", help="Audit all meshes even when rendering selected views")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     plan = json.loads(args.plan.read_text())
-    render_review(plan, args.plan.resolve().parent, args.destination, args.focus)
+    render_review(plan, args.plan.resolve().parent, args.destination, args.focus, audit_all=args.audit)
 
 
-def render_review(plan, plan_dir, out, selectors=None):
+def render_review(plan, plan_dir, out, selectors=None, *, audit_all=False):
     directions = ("front", "front_left", "left", "back_left",
                   "back", "back_right", "right", "front_right")
     focus = {}
@@ -84,7 +85,7 @@ def render_review(plan, plan_dir, out, selectors=None):
     if "geometry_limits" in plan:
         check_regions(plan["geometry_limits"], plan_dir, out,
                       lambda name: geometry(objects[name]))
-    if focus:
+    if focus and not audit_all:
         if any(o.hide_render or any(m.type == "MASK" for m in o.modifiers) for o in objects.values()):
             raise ValueError("Focused reviews require the full unmasked scene")
         report = {"scope": "local_iteration"}
