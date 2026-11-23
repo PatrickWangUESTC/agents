@@ -53,6 +53,24 @@ Place the unmasked crop next to its same-camera isolation when an apparent break
 
 Open `FIRST_REVIEW/overview.html` to inspect any tile at full resolution in one click, or use the portable `overview.jpg`. Each tile label is the exact `FRAME=VIEW` selector for focused re-review; inspect its original PNG at native resolution when needed. Reuse this command and camera plan on the final candidate to obtain a matched sheet.
 
+For a repair history, first check the saved review directories for the failing view, its diagnostic counterpart and the preceding checkpoint. Compose matched native pixels and a fixed crop directly, including for rejected trials and rollbacks:
+
+```sh
+python scripts/review_trace.py trace-plan.json TRACE_OUTPUT
+```
+
+Example plan (paths relative to the plan, ROI in original pixels with exclusive right and bottom):
+
+```json
+{"rgb_tolerance":18,
+ "states":{"initial":{"review":"initial","diagnostic":"initial-body-hidden"},
+           "repair":{"review":"repair","diagnostic":"repair-body-hidden"}},
+ "rows":[{"title":"Wrist opening","before":"initial","after":"repair","inner":"body",
+          "view":"wrist=front","roi":[100,150,320,340],"note":"Check the thumb root against the cuff."}]}
+```
+
+Choose the ROI and RGB tolerance from the current case. When both visibility states are in one review folder, omit `diagnostic` and set the row's `diagnostic_view` to the isolated frame selector. Keep the same lighting, material state, visibility and framing across comparisons except for the explicitly hidden inner layer. Verify legacy render settings from case provenance if missing in both reports. The image places the ROI in context, shows both native crops and colors newly visible, persistent and cleared pixels separately. Use this to tell a regression from a small net improvement that merely moved the exposed patch. Validate the cause against the original crops and any existing geometry checks. These are screen-space visibility measurements. Reuse stored images for magnification, different crops or a different threshold; render a new view only for missing evidence, occlusion, insufficient native detail or a changed candidate.
+
 To render the complete plan without composing a sheet:
 
 ```sh

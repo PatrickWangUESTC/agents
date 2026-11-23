@@ -137,6 +137,17 @@ def render_review(plan, plan_dir, out, selectors=None, *, audit_all=False):
         finally:
             for obj in hidden:
                 obj.hide_render = False
+    shading = scene.display.shading
+    report["render_settings"] = {
+        "engine": scene.render.engine, "pixel_aspect": [scene.render.pixel_aspect_x, scene.render.pixel_aspect_y],
+        "shift": [camera.data.shift_x, camera.data.shift_y], "sensor_fit": camera.data.sensor_fit,
+        "transform": scene.view_settings.view_transform, "look": scene.view_settings.look,
+        "exposure": scene.view_settings.exposure, "gamma": scene.view_settings.gamma,
+        "light": shading.light, "color_type": shading.color_type, "shadows": shading.show_shadows,
+        "cavity": shading.show_cavity, "backface_culling": shading.show_backface_culling,
+        "background_type": shading.background_type, "background_color": list(shading.background_color),
+        "world_color": list(scene.world.color) if scene.world else None,
+    }
     report.update(frames=plan, images=rendered)
     if focus:
         report["reviewed_views"] = {label: sorted(views) for label, views in focus.items()}
