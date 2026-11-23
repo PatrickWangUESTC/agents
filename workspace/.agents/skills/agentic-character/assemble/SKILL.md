@@ -56,7 +56,7 @@ Open `FIRST_REVIEW/overview.html` to inspect any tile at full resolution in one 
 For a repair history, first check the saved review directories for the failing view, its diagnostic counterpart and the preceding checkpoint. Compose matched native pixels and a fixed crop directly, including for rejected trials and rollbacks:
 
 ```sh
-python scripts/review_trace.py trace-plan.json TRACE_OUTPUT
+python scripts/review_trace.py trace-plan.json TRACE_OUTPUT --guard-frame
 ```
 
 Example plan (paths relative to the plan, ROI in original pixels with exclusive right and bottom):
@@ -68,6 +68,10 @@ Example plan (paths relative to the plan, ROI in original pixels with exclusive 
  "rows":[{"title":"Wrist opening","before":"initial","after":"repair","inner":"body",
           "view":"wrist=front","roi":[100,150,320,340],"note":"Check the thumb root against the cuff."}]}
 ```
+
+Use the optional row field `interface` to give multiple views of the same physical opening one decision. Keep independent sides and layers separate. Open `decisions.md` first. Start with the indicated evidence rows, inspect all relevant neighbors, and review the reported full-frame bounds outside the crops. Increased visibility may be intentional at an opening. Unchanged visibility cannot establish correct placement or shape.
+
+Record one repair decision per affected interface: the observation, suspected cause, smallest reversible edit and view that could disprove it. Batch edits on independent meshes. For edits sharing a mesh or contact surface, keep an intermediate checkpoint so each change can be rolled back. If the same patch persists, compare the opening and depth ordering before choosing another edit. Carry accepted interfaces forward and rerender the changed interface and its neighbors. Close with the full unmasked review. Measure elapsed time from the first evidence being ready to the reviewed repair decision, including diagnosis, edits, failed attempts and looking at images. Track machine time and the number of geometry revisions separately.
 
 Choose the ROI and RGB tolerance from the current case. When both visibility states are in one review folder, omit `diagnostic` and set the row's `diagnostic_view` to the isolated frame selector. Keep the same lighting, material state, visibility and framing across comparisons except for the explicitly hidden inner layer. Verify legacy render settings from case provenance if missing in both reports. The image places the ROI in context, shows both native crops and colors newly visible, persistent and cleared pixels separately. Use this to tell a regression from a small net improvement that merely moved the exposed patch. Validate the cause against the original crops and any existing geometry checks. These are screen-space visibility measurements. Reuse stored images for magnification, different crops or a different threshold; render a new view only for missing evidence, occlusion, insufficient native detail or a changed candidate.
 
