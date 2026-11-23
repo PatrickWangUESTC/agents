@@ -32,6 +32,45 @@ def audit(objects):
     return dict(raw_pairs=pairs, world_vertices=protected, triangles_uv=topology)
 
 
+def apply_local_fit(obj, objects, collider_name, fixed, p, t, q):
+    """Require a real improvement on readback and protect previously clear neighbors."""
+    original = tree(p,t)
+    initial = len(fixed.overlap(original))
+    ids = np.flatnonzero(np.linalg.norm(q-p,axis=1)>1e-10)
+    if not len(ids):
+        return initial, 0., 0., []
+    lo = np.minimum(p.min(0),q.min(0))
+    hi = np.maximum(p.max(0),q.max(0))
+    guards = {}
+    for name, other in objects.items():
+        if name in (obj.name,collider_name):
+            continue
+        corners = np.array([other.matrix_world @ Vector(v) for v in other.bound_box])
+        if np.any(corners.max(0)<lo) or np.any(corners.min(0)>hi):
+            continue
+        other_tree = tree(*surface(other))
+        if not original.overlap(other_tree):
+            guards[name] = other_tree
+    inverse = obj.matrix_world.inverted()
+    local = [obj.data.vertices[int(i)].co.copy() for i in ids]
+    rejected = []
+    for fraction in (1., .5, .25):
+        for i in ids:
+            obj.data.vertices[int(i)].co = inverse @ Vector(p[i]+fraction*(q[i]-p[i]))
+        obj.data.update()
+        actual, _ = surface(obj)
+        candidate = tree(actual,t)
+        pairs = len(fixed.overlap(candidate))
+        conflicts = [name for name,other in guards.items() if candidate.overlap(other)]
+        if pairs < initial and not conflicts:
+            return pairs, float(np.linalg.norm(actual-p,axis=1).max()), fraction, rejected
+        rejected.append(dict(fraction=fraction, pairs=pairs, new_crossings=conflicts))
+    for i,co in zip(ids,local):
+        obj.data.vertices[int(i)].co = co
+    obj.data.update()
+    return initial, 0., 0., rejected
+
+
 def meshes():
     return {o.name:o for o in bpy.context.scene.objects if o.type=='MESH'}
 
@@ -74,22 +113,20 @@ def main():
             obj=movable(name)
             p,t=surface(obj)
             started=time.monotonic()
-            q,history=fit(p,t,fixed,step['clearance']*height,step['max_offset']*height,step['iterations'])
+            mobility=None
             if 'height_fade' in step:
                 low,high=step['height_fade']
                 if not 0<=low<high<=1:
                     raise ValueError('height_fade needs two increasing relative heights')
                 z=(p[:,2]-collider[:,2].min())/height
                 a=np.clip((z-low)/(high-low),0,1)
-                q=p+(q-p)*(a*a*(3-2*a))[:,None]
-            inverse=obj.matrix_world.inverted()
-            for i in np.flatnonzero(np.linalg.norm(q-p,axis=1)>1e-10):
-                obj.data.vertices[int(i)].co=inverse @ Vector(q[i])
-            obj.data.update()
+                mobility=a*a*(3-2*a)
+            q,history=fit(p,t,fixed,step['clearance']*height,step['max_offset']*height,step['iterations'],mobility)
+            pairs,offset,fraction,rejected=apply_local_fit(obj,objects,step['collider'],fixed,p,t,q)
             report['clearance'].append(dict(part=name,collider=step['collider'],history=history,
-                                             applied_pairs=len(fixed.overlap(tree(q,t))),
-                                             seconds=time.monotonic()-started,
-                                             max_offset=float(np.max(np.linalg.norm(q-p,axis=1)))))
+                                             applied_pairs=pairs,seconds=time.monotonic()-started,
+                                             max_offset=offset,applied_fraction=fraction,
+                                             rejected_trials=rejected))
     bpy.ops.file.pack_all()
     path=str(out/'assembly.blend')
     bpy.ops.wm.save_as_mainfile(filepath=path)
