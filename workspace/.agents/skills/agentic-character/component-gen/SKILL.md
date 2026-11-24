@@ -5,6 +5,8 @@ description: Generate independent low-poly anime character meshes and reference-
 
 Use the reviewed case-specific parts from character-part-extraction. For each part, use its individual front PNG as the geometry and color reference. The complete A-pose provides scale and alignment during assembly. Use the Tripo CLI with the authorized regional account.
 
+For a new body mesh, use the PNG selected by [body image post-processing](../character-part-extraction/SKILL.md#body-image-post-processing) as PART_IMAGE for geometry and texture. For a resumed mesh, check its recorded source against the selected image and flag any mismatch before reusing it. Inspect the generated bare feet from the front and side against one ground plane and record heel and forefoot contact on each side.
+
 ## Selected models
 
 1. Generate geometry with Smart Mesh P1, model P1-20260311. Use a default target of 5,000 faces per part, texture=false and pbr=false. Record the actual triangle count from the output.
