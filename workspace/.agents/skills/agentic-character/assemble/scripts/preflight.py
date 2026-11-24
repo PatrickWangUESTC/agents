@@ -1,4 +1,5 @@
 """Check corresponding source-surface regions before spending time on review images."""
+import hashlib
 import json
 
 import numpy as np
@@ -9,8 +10,9 @@ def edges(triangles):
     return np.unique(np.sort(pairs, axis=1), axis=0)
 
 
-def check_regions(specs, plan_dir, destination, geometry):
+def check_regions(specs, plan_dir, destination, geometry, *, baseline_hashes=None, changed=()):
     results = {}
+    whole, local = set(), set()
     try:
         if not isinstance(specs, dict) or not specs:
             raise ValueError("geometry_limits needs at least one named region")
@@ -26,6 +28,15 @@ def check_regions(specs, plan_dir, destination, geometry):
                     or ids.ndim != 1 or ids.dtype.kind not in "iu" or not len(ids)
                     or ids.min() < 0 or ids.max() >= min(len(base), len(points))):
                 raise ValueError(f"{name}: invalid reference or vertex correspondence")
+            if baseline_hashes is not None:
+                part = spec["part"]
+                if hashlib.sha256(base.tobytes()).hexdigest() != baseline_hashes[part]:
+                    raise ValueError(f"{name}: reference differs from frozen rigid placement")
+                if "max_extent_change" in spec and "max_p95_abs_relative_change" in spec:
+                    if len(np.unique(ids)) == len(base):
+                        whole.add(part)
+                    else:
+                        local.add(part)
             region = np.zeros(max(len(points), len(base)), dtype=bool)
             region[ids] = True
             def selected_edges(ts):
@@ -50,6 +61,13 @@ def check_regions(specs, plan_dir, destination, geometry):
                 "max_p95_edge_ratio": float(np.percentile(ratios, 95)),
                 "max_p95_abs_relative_change": float(np.percentile(np.abs(ratios - 1), 95)),
             }
+            if "max_extent_change" in spec:
+                extent = np.ptp(base[ids], axis=0)
+                # Normalize each nondegenerate axis independently. A planar patch's
+                # departure from its plane is measured against its longest dimension.
+                denom = np.where(extent > extent.max()*1e-6, extent, extent.max())
+                measured["max_extent_change"] = float(np.max(
+                    np.abs(np.ptp(points[ids], axis=0) - extent) / denom))
             limits = {k: v for k, v in spec.items() if k not in ("part", "reference")}
             if not limits or not limits.keys() <= measured.keys():
                 raise ValueError(f"{name}: missing or unknown limit")
@@ -60,6 +78,9 @@ def check_regions(specs, plan_dir, destination, geometry):
                 k for k, v in limits.items()
                 if (measured[k] < v if k == "min_edge_ratio" else measured[k] > v)
             ])
+        missing = set(changed) - (whole & local)
+        if missing:
+            raise ValueError(f"Missing whole-part and local shape limits for {sorted(missing)}")
         passed = all(not r["failed"] for r in results.values())
         report = {"passed": passed, "regions": results}
     except (KeyError, TypeError, IndexError, ValueError, OSError) as exc:

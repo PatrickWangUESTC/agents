@@ -61,12 +61,13 @@ def main():
     parser.add_argument("destination", type=Path)
     parser.add_argument("--focus", nargs="+", metavar="FRAME=VIEW")
     parser.add_argument("--audit", action="store_true", help="Audit all meshes even when rendering selected views")
+    parser.add_argument("--handoff", action="store_true", help="Verify shape evidence against the frozen rigid placement")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     plan = json.loads(args.plan.read_text())
-    render_review(plan, args.plan.resolve().parent, args.destination, args.focus, audit_all=args.audit)
+    render_review(plan, args.plan.resolve().parent, args.destination, args.focus, audit_all=args.audit, handoff=args.handoff)
 
 
-def render_review(plan, plan_dir, out, selectors=None, *, audit_all=False):
+def render_review(plan, plan_dir, out, selectors=None, *, audit_all=False, handoff=False):
     directions = ("front", "front_left", "left", "back_left",
                   "back", "back_right", "right", "front_right")
     focus = {}
@@ -82,15 +83,32 @@ def render_review(plan, plan_dir, out, selectors=None, *, audit_all=False):
     scene = bpy.context.scene
     objects = meshes()
     geometry = lru_cache(maxsize=None)(surface)
-    if "geometry_limits" in plan:
-        check_regions(plan["geometry_limits"], plan_dir, out,
-                      lambda name: geometry(objects[name]))
-    if focus and not audit_all:
+    if handoff and (not plan.get("handoff_baseline") or "full" not in plan["frames"] or
+                    plan["frames"]["full"].get("hide") or
+                    (focus and not {"front","left","back","right"}.issubset(focus.get("full", set())))):
+        raise ValueError("Handoff requires the frozen baseline report and all four unmasked full views")
+    if not handoff and "geometry_limits" in plan:
+        check_regions(plan["geometry_limits"], plan_dir, out, lambda name: geometry(objects[name]))
+    if focus and not (audit_all or handoff):
         if any(o.hide_render or any(m.type == "MASK" for m in o.modifiers) for o in objects.values()):
             raise ValueError("Focused reviews require the full unmasked scene")
         report = {"scope": "local_iteration"}
     else:
         report = audit(objects)
+    hashes, changed = None, []
+    if handoff:
+        baseline = json.loads((plan_dir / plan["handoff_baseline"]).read_text())
+        hashes = baseline["world_vertices"]
+        if hashes.keys() != report["world_vertices"].keys():
+            raise ValueError("Mesh inventory differs from the frozen baseline")
+        changed = [n for n in hashes if hashes[n] != report["world_vertices"][n]
+                   or baseline["triangles_uv"][n] != report["triangles_uv"][n]]
+        if changed and baseline.get("frames", {}).get("geometry_limits") != plan.get("geometry_limits"):
+            raise ValueError("Handoff limits differ from the rigid baseline review plan")
+    if handoff and ("geometry_limits" in plan or changed):
+        check_regions(plan.get("geometry_limits"), plan_dir, out,
+                      lambda name: geometry(objects[name]), baseline_hashes=hashes, changed=changed)
+    report["shape_review"] = "verified_for_visual_review" if handoff else "diagnostic_only"
     @lru_cache(maxsize=None)
     def garment_tree(obj):
         return tree(*geometry(obj))

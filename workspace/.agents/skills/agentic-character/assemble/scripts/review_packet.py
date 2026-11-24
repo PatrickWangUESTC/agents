@@ -49,7 +49,7 @@ def render_packet(args, plan):
             reference = source.convert("RGB")
     renderer = Path(__file__).with_name("review_views.py")
     subprocess.run([args.blender, "-b", args.scene, "--python-exit-code", "1", "-P", renderer,
-                    "--", args.plan, args.output, "--audit", "--focus", *selectors], check=True)
+                    "--", args.plan, args.output, "--audit", *(["--handoff"] if args.handoff else []), "--focus", *selectors], check=True)
 
     cell, heading = 360, 40
     title_font, label_font, small_font = font(20), font(16), font(13)

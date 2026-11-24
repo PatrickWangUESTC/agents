@@ -18,6 +18,7 @@ def overview(argv):
     parser.add_argument("plan", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--blender", default="blender")
+    parser.add_argument("--handoff", action="store_true")
     args = parser.parse_args(argv)
     plan = json.loads(args.plan.read_text())
     if "review_groups" in plan:
@@ -38,7 +39,7 @@ def overview(argv):
         tiles.append((key, f"{frame}-{view}.png"))
     renderer = Path(__file__).with_name("review_views.py")
     subprocess.run([args.blender, "-b", args.scene, "--python-exit-code", "1",
-                    "-P", renderer, "--", args.plan, args.output], check=True)
+                    "-P", renderer, "--", args.plan, args.output, *(["--handoff"] if args.handoff else [])], check=True)
     cell, header = 360, 26
     sheet = Image.new("RGB", (4*cell, ((len(tiles)+3)//4)*(cell+header)), "white")
     draw = ImageDraw.Draw(sheet)
