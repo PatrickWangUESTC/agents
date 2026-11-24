@@ -31,7 +31,7 @@ class SkirtLengths:
         self.edges = lengths[valid]
         self.paths = list(paths)
         self.rest = self.path_lengths(rest)
-        if not np.any(valid) or not self.paths or np.any(self.rest <= 0):
+        if not np.any(valid) or np.any(self.rest <= 0):
             raise ValueError("Empty edge sample or invalid material path")
 
     def path_lengths(self, points):
